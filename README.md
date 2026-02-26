@@ -1,89 +1,90 @@
-# 100-days-of-nautobot-challenge
+# Nautobot 100天挑战
 
-Hello everybody, welcome to the "100 Days of Nautobot challenge." This is a self-directed, guided journey for anybody who wants to build a strong and consistent network automation skills using Nautobot. The challenges use social accountability and transparency to form network automation skills with Nautobot. 
+大家好, 欢迎参加 "Nautobot 的 100 天挑战" 。这是一个为任何想要使用 Nautobot 建立强大且一致的自动化网络技能的人提供的自我导向、指导性旅程。
+挑战利用社交化承诺和透明度来形成使用 Nautobot 的网络自动化技能。
 
-The challenges will focus on Nautobot Jobs and Nautobot Apps, two of the areas that take advantage of the unique position Nautobot is in for performing network automation tasks. 
+挑战将专注于 Nautobot Jobs 和 Nautobot Apps，这两个领域充分利用了 Nautobot 在执行网络自动化任务中的独特地位。
 
 
-## What is the 100 Days of Nautobot Challenge? 
+## 什么是 100 天 Nautobot 挑战？
 
-In short, it is a self-directed, guided journey for community members who are committed to learn about network automation using Nautobot. 
+简而言之，这是一个为致力于学习使用 Nautobot 进行网络自动化的社区成员提供的自我导向、指导性旅程。
 
-## Why should I join the challenge? 
+## 为什么我应该加入挑战？
 
-The ultimate goal of the 100 Days of Nautobot Challenge is to become a better Network Automation Developer. If you want to become a more versatile, disciplined, and skilled network automation operator, engineer, or developer, you should join the challenge. 
+100 天 Nautobot 挑战的最终目标是成为一名更好的网络自动化开发者。如果你希望成为一名更全面、更有纪律、更熟练的网络自动化操作员、工程师或开发者，你应该加入这个挑战。
 
-## How does the challenge work? 
+## 挑战是如何运作的？
 
-You can sign up via the [100 Days of Nautobot Challenge](https://go.networktocode.com/100-days-of-nautobot) link. 
+你可以通过 [100 Days of Nautobot Challenge](https://go.networktocode.com/100-days-of-nautobot) 链接进行报名：  . 
 
-Each day, you will receive an email for the day's task and deliverable. After completion, we ask that you post your progress on any of the social media platform to showcase your result. This will also serve as a social commitment for the challenge, track progress, builds your portfolio, and a cool way to show your friends and family how awesome of a network automation engineer you are. 
+你每天都会收到当天的任务和可交付成果的邮件。完成后，我们希望你能在任何社交媒体平台上发布你的进展，以展示你的成果。这也会成为挑战的社会承诺，跟踪进度，建立你的作品集，以及向朋友和家人展示你是一名多么出色的网络自动化工程师的一种很酷的方式。
 
-Upon completion of the daily challenge, you will receive additional challenge the next day. Along the way, you will make friends, earn badges, and learn a thing or two about Nautobot and network automation. 
+完成每日挑战后，你将收到下一天的额外挑战。在这个过程中，你会交到朋友，获得徽章，并学习一些关于 Nautobot 和网络自动化的知识。
 
-## What is the daily and overall commitment for the challenge? 
+## 挑战的每日和整体承诺是什么？
 
-We will deliver 100 Days worth of materials to you, but depending on your goal, you can start / stop / pick-and-choose between the challenges.  
+我们将为你提供 100 天的材料，但根据你的目标，你可以开始/停止/选择挑战。
 
-Each challenge will take about 1 hour to complete, some challenges might take more time, some might take less. 
+每个挑战大约需要 1 小时完成，有些挑战可能需要更多时间，有些可能需要更少时间。
 
-Also, the actual mileage might vary depending on your background and experience. But it shouldn't take too much of your time each day. 
+此外，实际所需时间可能因个人背景和经验而异。但每天不应占用太多时间。
 
-## Why Nautobot? 
+## 为什么选择 Nautobot？
 
-Because [Nautobot](https://docs.nautobot.com/) is an extensible and flexible Network Source of Truth and Network Automation platform that is the cornerstone of any network automation architecture. Even if you are not using Nautobot currently, it is worth the time and energy to leverage Network to Code's experience in helping hundreds of companies achieve their network automation goals. 
+因为 [Nautobot](https://docs.nautobot.com/) 是一个可扩展且灵活的网络真相来源和网络自动化平台，是任何网络自动化架构的基石。即使您目前未使用 Nautobot，利用 Network to Code 的经验帮助数百家公司实现其网络自动化目标，也值得您花费时间和精力。
 
-## No really, why should I join? 
+## 真的，我为什么要加入呢？
 
-Ok, now that you asked, let's expand the reasons on the methodology and approach of this challenge. 
+好吧，既然你问了，那我们来详细谈谈这个挑战的方法论和思路。
 
-### You will learn how to learn
+### 你会学会如何学习
 
-In our combined tens of years of training network automation professionals, we know learning in itself is a skill that needs to be practiced. Breaking down big projects into smaller tasks, learn a new subject progressively, and having the small wins to keep the learner motivated are all key areas that help us learn. We hope this project can prepare the learners on the skills of learning. 
+在我们共同培训网络自动化专业人员的几十年中，我们知道学习本身是一项需要练习的技能。将大项目分解成小任务，逐步学习新知识，以及通过小成就来保持学习者的动力，这些都是帮助我们学习的关键领域。我们希望这个项目能够帮助学习者掌握学习的技能。
 
-### You will improve your discipline
+### 你会提升自律性
 
-As we all know, it takes discipline to complete a difficult task. Discipline in learning refers to consistent self-control in setting up time to study, setting a clear goal each sitting, making a structured effort toward learning, all of which we hope to help you practice in this challenge. 
+众所周知，完成一项艰巨的任务需要自律。学习中的自律指的是在安排学习时间上保持一致的自我控制，每次设定明确的目标，以结构化的努力向学习迈进，我们希望通过这个挑战帮助你练习这些。
 
-### You will become a self-starter
+### 你会成为一个自驱者
 
-This is a self-directed learning path, you are a self-starter simply by starting this challenge. 
+这是一个自我导向的学习路径，你仅仅通过开始这个挑战，就已经是一个自驱者了。
 
-### You will create a strong portfolio
+### 你会创建一个强大的作品集
 
-We hope by the end of the challenge, you will have enough skills and small projects to show off your skills as a network automation engineer. 
+我们希望到挑战结束时，你将拥有足够的技能和小项目来展示你作为网络自动化工程师的能力。
 
-### You will join a vibrant community 
+### 你会加入一个充满活力的社区
 
-Learning is more fun when we can bounce off ideas with each other, pick others up when they are down, and collaborate in the process. You will join other like-minded people during this learning process. 
+当我们能够互相激发想法，在他人遇到困难时给予支持，并在过程中合作时，学习会更加有趣。在这个学习过程中，你将与其他志同道合的人一起加入。
 
-Here is the [Network to Code Slack Channel link](https://slack.networktocode.com/) to join our Slack channel. 
+这是加入我们 Slack 频道的链接 [Network to Code Slack Channel link](https://slack.networktocode.com/) . 
 
-## Tips to Help you Thrive in the Challenge
+## 帮你通过挑战的建议
 
-As you plan your 100 Days of Nautobot challenge, we can offer some tips. 
+在您规划 100 天 Nautobot 挑战时，我们可以提供一些建议。
 
-### Plan ahead 
+### 提前规划
 
-The most important thing is to plan ahead. We prefer consistency over spikes in effort and time. Plan to set aside roughly an hour each day to work on the task. 
+最重要的是提前规划。我们更倾向于保持努力和时间的稳定性，而不是出现波动。计划每天大致留出一小时来处理这项任务。
 
-### Keep a journal 
+### 保持学习笔记
 
-There are multiple advantages of keeping a learning journal. It helps to track the progress, encourages reflection, and enhance the memory. If you follow the suggestion of publish your results on social media, that is a form of a learning journal. 
+坚持写学习笔记有很多好处。它有助于追踪学习进度、促进反思并增强记忆力。如果你采纳建议，将学习成果发布到社交媒体上，那也算是一种学习记录。
 
-### Make a public commitment
+### 公开承诺
 
-Making a public commitment increases social accountability and provide network opportunities. In other words, it keeps you going. Make sure you use the tag of #100DaysOfNautobot when posting so we can all share your success. 
+公开承诺可以增强社会责任感，并提供人脉拓展机会。换句话说，它能激励你坚持下去。发布内容时，请务必使用标签 #100DaysOfNautobot，这样我们就能分享你的成功喜悦。
 
-## Ok, I am sold, what is the next step? 
+## 好的，我同意了，下一步是什么？
 
-I am glad you asked, sign up for the challenge [here](https://go.networktocode.com/100-days-of-nautobot) if you have not done so already, and let the games begin! 
+很高兴你问，如果你还没有参加，请在这里报名挑战 [here](https://go.networktocode.com/100-days-of-nautobot) ，让游戏开始吧！ 
 
-## Contributors
+## 贡献者
 
-This repository is a team effort, thank you for making this challenge happen. 
+这个仓库是团队合作的成果，感谢你们促成了这个挑战。
 
-Here is a partial list of all the contributors:
+以下是所有贡献者中的一部分：
 
 - Jason Edelman 
 - Ken Celenza
