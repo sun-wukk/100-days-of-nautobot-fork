@@ -1,55 +1,55 @@
-# Preamble
+# 前言
 
-Welcome to the 100 Days of Nautobot Challenge! This is meant to be a fun, self-directed, community-based exercise that can arms you with network automation tools you can use right away.
+欢迎参加 100 天 Nautobot 挑战！这是一个有趣、自主、基于社区的活动，旨在让你掌握可以立即使用的网络自动化工具。
 
-Each exercise is loosely coupled with each other with very little dependencies by design. They are bite-size challenges that can make the most efficient use of your time in learning.
+每个练习在设计上相互关联性较弱，依赖性非常小。它们是小型挑战，可以让你在学习中高效利用时间。
 
-However, it is always more entertaining and enjoyable to think about these exercises in a real-world scenario. So for the following challenges, they will be loosely centered around a fictitious company called ```Retail-r-Us``` for our examples.  
+然而，在现实场景中思考这些练习总是更有趣、更令人愉快。因此，在接下来的挑战中，我们将以一个名为 Retail-r-Us 的虚构公司为例进行说明。
 
-## Company Overview
 
-Retail-r-Us is a United States retailer with 10 locations on the East Coast and plans to expand to additional locations within the next 12 months.
+## 公司概况
 
-You are a newly hired network automation engineer tasked with helping Retail-r-Us scale their network for planned upgrades. This journey involves strategic planning and execution to support both current operations and future expansions.
+Retail-r-Us 是一家美国零售商，在美国东海岸有 10 个门店，计划在未来 12 个月内扩展到更多门店。
 
-## Locations
+你是新入职的网络自动化工程师，负责帮助 Retail-r-Us 扩展其网络以支持计划的升级。这一过程涉及战略规划和执行，以支持当前运营和未来扩展。
 
-- Retailer with 10 locations in the United States East Coast
-- 1 HQ Location in NYC
-- Expand to 10 more locations on the East Coast and 5 on the West Coast in the next 12 months
-- The location design should accommodate future global expansion
+## 门店
 
-## Retail Site Network Designs
+- 在美国东海岸拥有10家门店的零售商
+- 总部位于纽约市
+- 未来 12 个月内扩展至东海岸 10 个门店和西海岸 5 个门店
+- 位置设计应考虑未来全球扩张
 
-- Small sites: single router, single switch, with few wireless Access Points (APs)
-- Medium sites: Dual-router, one core switch, few access switches, wireless APs
-- Large sites: Dual-router, dual-core switch, access switches, wireless APs
-- Remote point of contact at Retail but not full time network engineers
+## 零售站点网络设计
 
-## HQ Site Network Design
+- 小型站点：单个路由器，单个交换机，少量无线接入点（AP）
+- 中型站点：双路由器，一个核心交换机，少量接入交换机，无线 AP
+- 大型站点：双路由器，双核心交换机，接入交换机，无线 AP
+- 零售店有远程联络点，但非全职网络工程师
 
-- Catalyst switches in L3 mode
+## 总部站点网络设计
+
+- 三层模式下的 Catalyst 交换机
 - Access Layer switch in MDF Hub-and-Spoke with 10 IDFs
-- Cisco DNA Center (DNAC) wireless
-- Central network engineering team for design and operations
+- Cisco DNA Center (DNAC) 无线网络
+- 中央网络工程团队负责设计和运营
 
-## Device Consideration
+## 设备考虑
+- Meraki 用于零售无线管理
+- Cisco Catalyst 用于零售交换
+- 分支路由器是思科 ISR
 
-- Meraki is used for retail wireless management
-- Cisco Catalyst is used for retail switching
-- Branch routers are Cisco ISRs
+## 电路
 
-## Circuits
+- ATT 和 Verizon 双重供应商
 
-- Dual providers of ATT & Verizon
+## 存在一些工程挑战
 
-## There are several engineering challenges
+- 确保遵循命名规范
+- 确保各零售地点的网络合规
+- 由于服务台工单请求的数量，需要自动化以下操作任务：
+  - Bouncing 连接到 IP 电话和电路的交换机端口
+  - 基于设备移动更改零售交换机端口的access VLAN
+  - 收集 show 命令的输出
 
-- Ensure naming standards are being followed
-- Ensure network compliance across retail locations
-- Automate the following operation tasks due to the level of service desk ticket requests:
-  - Bouncing switch port that are attached to IP phones and circuits
-  - Change access VLANs on retail switch ports based on device movement
-  - Collect output of show commands
-
- The team have decided to use Nautobot as their source of truth and automation engine.
+团队已决定使用 Nautobot 作为其真实来源和自动化引擎。
