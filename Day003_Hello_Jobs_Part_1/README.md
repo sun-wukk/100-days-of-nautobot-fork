@@ -89,7 +89,7 @@ redis-1          | 1:M 17 Oct 2024 12:06:43.216 * Running mode=standalone, port=
 
 此选项之所以有效，是因为 ```docker-compose.local.yml``` 文件将卷映射到 ```nautobot``` 容器：
 
-``
+```
 ---
 services:
   nautobot:
