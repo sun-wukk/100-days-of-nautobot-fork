@@ -8,7 +8,10 @@
 
 ## 在 Codespaces 中启动 Nautobot 实例
 
+> [!TIP]
 > 如果您正在从第 1 天重新启动现有的 Codespace，可以跳过本部分。但请注意，有时在重新启动后 Docker 守护程序停止工作时，我们需要[重建 Codespace](https://github.com/nautobot/100-days-of-nautobot/blob/main/Lab_Setup/lab_related_notes/README.md#rebuild-codespace)。
+
+> [!NOTE]
 > 本部分包含大量来自第 1 天的重复信息，您可以快速浏览。
 
 让我们回顾一下第 1 天开发设置的步骤。
@@ -16,13 +19,9 @@
 
 ![codespaces_screenshot_1](images/codespaces_screenshot_1.png)
 
-> [!TIP]
-
 让我们选择"Lab Scenario 1"：
 
 ![codespaces_screenshot_2](images/codespaces_screenshot_2.png)
-
-> [!NOTE]
 
 就像我们在第 1 天所做的那样，我们可以使用以下命令启动 Nautobot 实例以及所有其他必要的组件：
 
@@ -45,23 +44,23 @@
 
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke debug
 
-以调试模式启动 Nautobot...
-运行 docker compose 命令 "up"
-Container nautobot_docker_compose-redis-1  已创建
-容器 nautobot_docker_compose-db-1 已创建
-容器 nautobot_docker_compose-nautobot-1 已创建
-容器 nautobot_docker_compose-celery_beat-1 已创建
-容器 nautobot_docker_compose-celery_worker-1 已创建
-正在附加到 celery_beat-1、celery_worker-1、db-1、nautobot-1、redis-1
-redis-1          | 1:C 17 Oct 2024 12:06:43.191 # oO0OoO0OoO0Oo Redis 正在启动 oO0OoO0OoO0Oo
-redis-1          | 1:C 17 Oct 2024 12:06:43.191 # Redis 版本=6.2.16，位数=64，提交=00000000，修改=0，进程 ID=1，刚启动
-redis-1          | 1:C 17 Oct 2024 12:06:43.191 # 配置已加载
-redis-1          | 1:M 17 Oct 2024 12:06:43.192 * 单调时钟：POSIX clock_gettime
-redis-1          | 1:M 17 Oct 2024 12:06:43.216 * 运行模式=standalone，端口=6379。
+Starting Nautobot in debug mode...
+Running docker compose command "up"
+ Container nautobot_docker_compose-redis-1  Created
+ Container nautobot_docker_compose-db-1  Created
+ Container nautobot_docker_compose-nautobot-1  Created
+ Container nautobot_docker_compose-celery_beat-1  Created
+ Container nautobot_docker_compose-celery_worker-1  Created
+Attaching to celery_beat-1, celery_worker-1, db-1, nautobot-1, redis-1
+redis-1          | 1:C 17 Oct 2024 12:06:43.191 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+redis-1          | 1:C 17 Oct 2024 12:06:43.191 # Redis version=6.2.16, bits=64, commit=00000000, modified=0, pid=1, just started
+redis-1          | 1:C 17 Oct 2024 12:06:43.191 # Configuration loaded
+redis-1          | 1:M 17 Oct 2024 12:06:43.192 * monotonic clock: POSIX clock_gettime
+redis-1          | 1:M 17 Oct 2024 12:06:43.216 * Running mode=standalone, port=6379.
 ...
 <skip>
 
-我已准备好进行翻译。请提供需要翻译的英文或其他语言文本，我将按照规则仅输出简体中文译文
+```
  
 让我们保持这个终端窗口打开，这样我们可以观察由不同容器生成的所有后续消息。
 
@@ -74,9 +73,9 @@ redis-1          | 1:M 17 Oct 2024 12:06:43.216 * 运行模式=standalone，端�
 
 现在我们已经在调试模式下运行 Nautobot，并打开了浏览器窗口来访问 Nautobot UI。
 
-## 创建作业文件
+## 创建Job文件
 
-我们现在准备使用 Python 创建第一个作业文件。**有两个选项可供选择，请选择其中一个。** 如果你是 Nautobot Jobs 的新手，这对我们大多数人来说可能都是这样，我建议从选项 1 开始。但不用担心——也可以看一下选项 2，以了解其背后的结构。
+我们现在准备使用 Python 创建第一个Job文件。**有两个选项可供选择，请选择其中一个。** 如果你是 Nautobot Jobs 的新手，这对我们大多数人来说可能都是这样，我建议从选项 1 开始。但不用担心——也可以看一下选项 2 以了解其背后的结构。
 
 ### 选项 1. 在 Jobs 文件夹中创建文件
 
@@ -90,26 +89,26 @@ redis-1          | 1:M 17 Oct 2024 12:06:43.216 * 运行模式=standalone，端�
 
 此选项之所以有效，是因为 ```docker-compose.local.yml``` 文件将卷映射到 ```nautobot``` 容器：
 
-```
+``
 ---
 services:
-nautobot:
-command: "nautobot-server runserver 0.0.0.0:8080"
-端口:
-- "8080:8080"
-卷:
-- "../config/nautobot_config.py:/opt/nautobot/nautobot_config.py"
-- "../jobs:/opt/nautobot/jobs"
-healthcheck:
-interval: "30s"
-timeout: "10s"
-start_period: "60s"
-retries: 3
-test: ["CMD", "true"]  # 由于分层原因，disable: true 不会生效。请改为更改 test
-celery_worker:
-volumes:
-- "../config/nautobot_config.py:/opt/nautobot/nautobot_config.py"
-- "../jobs:/opt/nautobot/jobs"
+  nautobot:
+    command: "nautobot-server runserver 0.0.0.0:8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - "../config/nautobot_config.py:/opt/nautobot/nautobot_config.py"
+      - "../jobs:/opt/nautobot/jobs"
+    healthcheck:
+      interval: "30s"
+      timeout: "10s"
+      start_period: "60s"
+      retries: 3
+      test: ["CMD", "true"]  # Due to layering, disable: true won't work. Instead, change the test
+  celery_worker:
+    volumes:
+      - "../config/nautobot_config.py:/opt/nautobot/nautobot_config.py"
+      - "../jobs:/opt/nautobot/jobs"
 ```
 
 如果您已通过选项 1 创建了文件，可以阅读选项 2 以更好地理解作业文件结构。
@@ -130,14 +129,12 @@ volumes:
 
 ```
 @ericchou1 ➜ ~ $ docker ps
-容器 ID   镜像                                    命令                  创建时间              状态                        端口                                                 名称
-0674568846da   yourrepo/nautobot-docker-compose:local   "sh -c 'nautobot-ser…"   约一分钟前   运行中 约一分钟 (健康)   8080/tcp, 8443/tcp                                    nautobot_docker_compose-celery_worker-1
-
-```
-50c2738fbded   yourrepo/nautobot-docker-compose:local   "sh -c 'nautobot-ser…"   约一分钟前   运行中 约一分钟             8080/tcp, 8443/tcp                                    nautobot_docker_compose-celery_beat-1
-15a80b83b587   yourrepo/nautobot-docker-compose:local   "/docker-entrypoint.…"   约一分钟前   运行中 约一分钟 (健康)   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp, 8443/tcp   nautobot_docker_compose-nautobot-1
-fd292402488a   redis:6-alpine                           "docker-entrypoint.s…"   约一分钟前   运行中 约一分钟             6379/tcp                                              nautobot_docker_compose-redis-1
-5075768319ae   postgres:13-alpine                       "docker-entrypoint.s…"   约一分钟前   运行中 约一分钟 (健康)   5432/tcp                                              nautobot_docker_compose-db-1
+CONTAINER ID   IMAGE                                    COMMAND                  CREATED              STATUS                        PORTS                                                 NAMES
+0674568846da   yourrepo/nautobot-docker-compose:local   "sh -c 'nautobot-ser…"   About a minute ago   Up About a minute (healthy)   8080/tcp, 8443/tcp                                    nautobot_docker_compose-celery_worker-1
+50c2738fbded   yourrepo/nautobot-docker-compose:local   "sh -c 'nautobot-ser…"   About a minute ago   Up About a minute             8080/tcp, 8443/tcp                                    nautobot_docker_compose-celery_beat-1
+15a80b83b587   yourrepo/nautobot-docker-compose:local   "/docker-entrypoint.…"   About a minute ago   Up About a minute (healthy)   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp, 8443/tcp   nautobot_docker_compose-nautobot-1
+fd292402488a   redis:6-alpine                           "docker-entrypoint.s…"   About a minute ago   Up About a minute             6379/tcp                                              nautobot_docker_compose-redis-1
+5075768319ae   postgres:13-alpine                       "docker-entrypoint.s…"   About a minute ago   Up About a minute (healthy)   5432/tcp                                              nautobot_docker_compose-db-1
 @ericchou1 ➜ ~ $ 
 
 ```
@@ -146,25 +143,24 @@ fd292402488a   redis:6-alpine                           "docker-entrypoint.s…"
 
 让我们以 root 身份附加到 nautobot 容器，导航到 ```/opt/nautobot/jobs``` 文件夹，然后创建一个 ```hello_jobs.py``` 文件：
 
-我已准备好进行翻译。请提供需要翻译的英文或其他语言文本，我将按照规则仅输出简体中文译文
+```
 @ericchou1 ➜ ~ $ docker exec -it -u root nautobot_docker_compose-nautobot-1 bash
 
 root@196e7f7abedd:/opt/nautobot# cd jobs
 root@196e7f7abedd:/opt/nautobot/jobs# touch hello_jobs.py
-我已准备好进行翻译。请提供需要翻译的英文或其他语言文本，我将按照规则仅输出简体中文译文
+```
 
-> [!重要]
+> [!IMPORTANT] 
 文件的位置非常重要，这是 Nautobot 查找作业文件的地方。同时使用 `chown` 设置文件权限也很关键。
 
 我们需要将文件的所有者和组更改为 `nautobot`：
+
 
 ```
 root@196e7f7abedd:/opt/nautobot/jobs# ls -lia hello_jobs.py 
 1487781 -rw-r--r-- 1 root root 0 Oct 17 12:38 hello_jobs.py
 
 root@196e7f7abedd:/opt/nautobot/jobs# chown nautobot:nautobot hello_jobs.py 
-
-```
 
 root@196e7f7abedd:/opt/nautobot/jobs# ls -lia hello_jobs.py 
 
@@ -200,33 +196,33 @@ from nautobot.apps.jobs import Job, register_jobs
 ```
 class HelloJobs(Job):
 
-def run(self):
-self.logger.debug("你好，这是我的第一个 Nautobot 任务。")
+    def run(self):
+        self.logger.debug("Hello, this is my first Nautobot Job.")
 ```
 
 最后，我们需要向 Nautobot 注册我们的任务：
 
 ```
 register_jobs(
-HelloJobs,
+    HelloJobs,
 )
 ```
 
-> [!重要]
+> [!IMPORTANT]
 > 注册作业是一个重要步骤，许多人（包括我自己）在初次接触 Nautobot 作业时可能会忽略。
 
 以下是完整文件的样子：
 
 ```python
-从 nautobot.apps.jobs 导入 Job、register_jobs
+from nautobot.apps.jobs import Job, register_jobs
 
 class HelloJobs(Job):
 
-def run(self):
-self.logger.debug("你好，这是我的第一个 Nautobot 任务。")
+    def run(self):
+        self.logger.debug("Hello, this is my first Nautobot Job.")
 
 register_jobs(
-HelloJobs,
+    HelloJobs,
 )
 ```
 
@@ -250,71 +246,65 @@ HelloJobs,
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke --list
-可用任务：
+Available tasks:
 
-build                  构建 Nautobot docker 镜像。
-cli                    在运行中的 Nautobot 容器内启动 bash shell。
-createsuperuser        创建一个新的 Nautobot 超级用户账户（默认："admin"），将提示输入密码。
-db-export              将开发环境中的数据库导出到 nautobot.sql。
-db-import              将 Nautobot 数据库备份安装到开发环境中。
-debug                  以调试模式启动 Nautobot 及其依赖项。
-销毁所有容器和卷。
-导入 nautobot_data.json。
-在 Django 中执行迁移操作。
-启动交互式 nbshell 会话。
-post-upgrade           使用单一入口点执行 Nautobot 常见的升级后操作。
-restart                优雅地重启所有容器。
-start                  以分离模式启动 Nautobot 及其依赖项。
-stop                   停止 Nautobot 及其依赖项。
+  build                  Build Nautobot docker image.
+  cli                    Launch a bash shell inside the running Nautobot container.
+  createsuperuser        Create a new Nautobot superuser account (default: "admin"), will prompt for password.
+  db-export              Export the database from the dev environment to nautobot.sql.
+  db-import              Install the backup of Nautobot db into development environment.
+  debug                  Start Nautobot and its dependencies in debug mode.
+  destroy                Destroy all containers and volumes.
+  import-nautobot-data   Import nautobot_data.json.
+  migrate                Perform migrate operation in Django.
+  nbshell                Launch an interactive nbshell session.
+  post-upgrade           Nautobot common post-upgrade operations using a single entrypoint.
+  restart                Gracefully restart all containers.
+  start                  Start Nautobot and its dependencies in detached mode.
+  stop                   Stop Nautobot and its dependencies.
 
-我已准备好进行翻译。请提供需要翻译的英文或其他语言文本，我将按照规则仅输出简体中文译文
+```
 
 让我们执行一个 ```invoke post-upgrade```：
 
-我已准备好进行翻译。请提供需要翻译的英文或其他语言文本，我将按照规则仅输出简体中文译文
+```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke post-upgrade
-运行 docker compose 命令 "ps --services --filter status=running"
-运行 docker compose 命令 "exec nautobot nautobot-server post_upgrade"
-执行数据库迁移中...
+Running docker compose command "ps --services --filter status=running"
+Running docker compose command "exec nautobot nautobot-server post_upgrade"
+Performing database migrations...
 ...
 20:00:52.673 INFO    nautobot.extras.utils utils.py        refresh_job_model_from_job_class() :
-从 <HelloJobs> 创建了任务 "hello_jobs: HelloJobs"
+  Created Job "hello_jobs: HelloJobs" from <HelloJobs>
 
-正在生成电缆路径...
-未发现缺失的电路终端路径；跳过
-未找到缺失的控制台端口路径；跳过
-未找到缺失的控制台服务器端口路径；跳过
-未找到缺失的接口路径；跳过
-未找到缺失的电源馈线路径；跳过
-未找到缺失的电源插座路径；跳过
-未找到缺失的电源端口路径；跳过
-完成。
+Generating cable paths...
+Found no missing circuit termination paths; skipping
+Found no missing console port paths; skipping
+Found no missing console server port paths; skipping
+Found no missing interface paths; skipping
+Found no missing power feed paths; skipping
+Found no missing power outlet paths; skipping
+Found no missing power port paths; skipping
+Finished.
 
-正在收集静态文件...
+Collecting static files...
 
-0 个静态文件已复制到 '/opt/nautobot/static'，1156 个未修改。
+0 static files copied to '/opt/nautobot/static', 1156 unmodified.
 
-正在删除过时的内容类型...
+Removing stale content types...
 
-正在删除过期的会话...
+Removing expired sessions...
 ...
 
-刷新 _content_type 缓存
-CONTENT_TYPE_CACHE_TIMEOUT 设置为 0；跳过缓存刷新
+Refreshing _content_type cache
+CONTENT_TYPE_CACHE_TIMEOUT is set to 0; skipping cache refresh
 
-刷新动态组成员缓存...
-刷新 DynamicGroup 成员缓存...
-我已准备好进行翻译。请提供需要翻译的英文或其他语言文本，我将按照规则仅输出简体中文译文
+Refreshing dynamic group member caches...
+Refreshing DynamicGroup member caches...
+```
 
 如果我们回到 Nautobot UI 上的 `JOBS` 部分，应该能看到新创建的作业：
 
-我无法翻译图片内容。我是一个文本翻译工具，只能处理文字内容。
-
-如果您需要翻译图片中的文字，请：
-1. 将图片中的文字复制并粘贴为文本格式，或
-2. 直接提供文字内容
-
-这样我就能为您提供准确的简体中文翻译。
+![hello_jobs_1](images/hello_jobs_1.png)
 
 记住所有新工作默认是禁用的吗？我们需要通过点击编辑按钮来编辑工作：
 
