@@ -38,7 +38,7 @@
 
 在下一个界面上，点击"Dev container configuration"的下拉菜单，选择"Lab Scenario 1"，然后点击"Create Codespace"：
 
-> [!提示]
+> [!TIP]
 > 当你第一次启动 Codespace 时，它可能会提示你在基于浏览器的 Visual Studio Code 或启动桌面版本之间进行选择，请选择基于浏览器的版本以与屏幕截图保持一致，但如果你愿意，也可以随意选择桌面版本。
 
 ![Codespace_Screenshot_2.png](images/Codespace_Screenshot_2.png)
@@ -67,7 +67,7 @@ Codespace 中包含来自 [nautobot-docker-compose](https://github.com/nautobot/
 
 以下指令将在终端窗口中输入。
 
-> [!提示]
+> [!TIP]
 > 如果你尝试将命令复制并粘贴到 Codespace 终端窗口，它会在第一次时要求权限。请允许它。
 
 - 切换目录到 nautobot docker-compose 代码所在的位置：
@@ -165,7 +165,7 @@ bde9c3850113   postgres:13-alpine   "docker-entrypoint.s…"   31 seconds ago   
 
 - 现在我们可以使用 ```invoke debug```启动 nautobot 容器。这将以调试模式启动 Nautobot 并在屏幕上显示所有消息：
 
-> [!提示]
+> [!TIP]
 > 等待直到您看到 ```Starting development server at http://0.0.0.0:8080/``` 的消息后再继续下一步：
 
 ```shell
@@ -199,7 +199,7 @@ nautobot-1       |
 
 ![Codespace_Screenshot_7.png](images/Codespace_Screenshot_7.png)
 
-> [!提示]
+> [!TIP]
 > 我知道这不是最安全的用户名和密码，根据浏览器的不同，你可能会收到警告提示。该端口和实例 不 对公众开放。
 
 
@@ -245,7 +245,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 ![Codespace_Screenshot_8.png](images/Codespace_Screenshot_8.png)
 
-> [!提示]
+> [!TIP]
 > 您可以选择删除 Codespace，但是如果您这样做，您将需要重复本课程中的步骤。我的偏好是只 停止 Codespace，除非您的使用额度不足，您可以在 [此处](https://github.com/codespaces)检查。
 
 这就是第 1 天的全部内容，恭喜您创建了一个实验环境！
