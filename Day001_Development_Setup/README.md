@@ -18,7 +18,7 @@
 
 让我们从使用正确的选项启动 Codespace 开始。
 
-> [!提示]
+> [!TIP]
 > 我们在学习过程中学到了一些技巧和窍门，我们保留了一份运行中的 [Lab Notes](https://github.com/nautobot/100-days-of-nautobot/blob/main/Lab_Setup/lab_related_notes/README.md)。如果您遇到问题，请随时参考这份笔记。
 
 ## 启动 Codespace
