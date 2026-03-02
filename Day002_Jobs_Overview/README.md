@@ -181,4 +181,4 @@ Nautobot 任务还有许多其他优势，我们将在后续学习中了解到�
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+2+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制并粘贴：我刚刚完成了 100 天 Nautobot 挑战的第 2 天，https://github.com/nautobot/100-days-of-nautobot @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/)（复制并粘贴：I just completed Day 2 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
