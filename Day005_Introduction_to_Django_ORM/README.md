@@ -1,24 +1,24 @@
-# Use Nautobot shell to work with Django ORM
+# 使用Nautobot shell来处理Django ORM
 
-In today's challenge, we will use the Nautobot shell to work with Django ORM.
+在今天的挑战中，我们将使用Nautobot shell来处理Django ORM。
 
-Django ORM stands for `Object-Relational Mapping`, it is a feature that the Django web framework provides to abstract away the database layer between the code and database. By using Django ORM, we only have to worry about writing Python code and not database commands, in this case, SQL queries. 
+Django ORM代表`对象关系映射`，它是Django web框架提供的一个功能，用于抽象代码和数据库之间的数据库层。通过使用Django ORM，我们只需要担心编写Python代码，而不需要编写数据库命令，在这种情况下是SQL查询。
 
-What does it have to do with Nautobot jobs? There are several advantages of using Django ORM instead of raw SQL languages for code that we will write for Nautobot Jobs: 
+它与Nautobot jobs有什么关系？与在Nautobot Jobs中编写的代码相比，使用Django ORM而不是原始SQL语言有几个优势：
 
-- **Simplification**: It simplifies database interaction by using Python objects. The object can be a site, a circuit, an IP address, or anything else we can represent in code.  
-- **Ease of use**: As we will see, we can define the database schema via Python classes, called models, that is more intuitive than manage database operations. 
-- **Built-In**: Django ORM is a tool that is already built into the Django framework, and we can leverage all the development effort for features, security, code consistency, etc. 
+- **简化**：它通过使用Python对象来简化数据库交互。该对象可以是一个站点、一条电路、一个IP地址，或任何其他我们可以用代码表示的东西。
+- **易于使用**：如我们将看到的，我们可以通过Python类（称为模型）来定义数据库架构，这比管理数据库操作更直观。
+- **内置**：Django ORM是已经内置在Django框架中的工具，我们可以利用所有开发工作来获得功能、安全性、代码一致性等。
 
-The list goes on, we can dive into the additional security, object-oriented advantages, database portability, and many other advantages. But we will stop for now and move on with some examples, so we can see how it works. 
-
-> [!NOTE]
-> Since we are discussing Django ORM + Nautobot in today's challenge, I sometimes find it helpful to have the [Django ORM queries documentation](https://docs.djangoproject.com/en/5.1/topics/db/queries/) handy to see which of the features belong directly to the Django project. 
+列表还在继续，我们可以深入研究额外的安全性、面向对象的优势、数据库可移植性和许多其他优势。但我们现在将停止并继续一些例子，这样我们可以看到它如何工作。
 
 > [!NOTE]
-> If you restarted a stopped Codespace instance for today's lab, you can skip the steps of `invoke build` and `invoke db-import` to move directly to `invoke debug` to start the containers. 
+> 由于我们在今天的挑战中讨论Django ORM + Nautobot，我有时会发现准备[Django ORM查询文档](https://docs.djangoproject.com/en/5.1/topics/db/queries/)很有帮助，以查看哪些功能直接属于Django项目。
 
-Let's start the codespace environment. Once Codespace is started, we can use the terminal window to build the development environment:  
+> [!NOTE]
+> 如果你为今天的实验重新启动了停止的Codespace实例，可以跳过`invoke build`和`invoke db-import`的步骤，直接进行`invoke debug`来启动容器。
+
+让我们启动代码空间环境。Codespace启动后，我们可以使用终端窗口来构建开发环境：
 
 ```
 $ cd nautobot-docker-compose/
@@ -28,18 +28,18 @@ $ invoke db-import
 $ invoke debug
 ```
 
-Leave the terminal window open to let us monitor the logs, use a second terminal window to proceed with the following steps, remember to change to the right directory and start poetry: 
+保持终端窗口打开，以便我们监控日志，使用第二个终端窗口继续执行以下步骤，记住要切换到正确的目录并启动poetry：
 
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
 ```
 
-We can proceed to the next step. 
+我们可以继续下一步。
 
-## Working with nbshell
+## 使用nbshell
 
-There are a few command shortcuts provided for us via `invoke`, we can take a look at them using `invoke --list`: 
+通过`invoke`为我们提供了一些命令快捷方式，我们可以使用`invoke --list`来查看它们：
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke --list
@@ -61,7 +61,7 @@ Available tasks:
   stop                   Stop Nautobot and its dependencies.
 ```
 
-We are interested in using a Nautobot interactive shell for today's challenge, we will start the interactive shell with the `invoke nbshell` command: 
+我们对使用Nautobot交互式shell进行今天的挑战感兴趣，我们将使用`invoke nbshell`命令启动交互式shell：
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke nbshell
@@ -120,28 +120,28 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>>
 ```
 
-The first thing to notice from the nbshell command output is that it executed the `exec nautobot nautobot-server shell_plus` in the nautobot docker container. As mentioned, the invoke command behaves like a shortcut for full command line commands. 
+从nbshell命令输出中首先要注意的是它在nautobot docker容器中执行了`exec nautobot nautobot-server shell_plus`。如前所述，invoke命令的行为就像完整命令行命令的快捷方式。
 
 > [!TIP] 
-> If you are interested in the details of the invoke command configuration, take a look at the `tasks.py` file in the `nautobbot-docker-compose` folder. 
+> 如果你对invoke命令配置的细节感兴趣，请查看`nautobbot-docker-compose`文件夹中的`tasks.py`文件。
 
-Many of us are familiar with the Python interactive shell when we type in the `python3` at a command prompt. The `nb_shell` is similar to the Python shell with additional features added by Django and Nautobot. 
+我们许多人都熟悉在命令提示符中输入`python3`时的Python交互式shell。`nb_shell`类似于Python shell，但添加了Django和Nautobot的额外功能。
 
-Another thing to notice is all the `import` commands. As mentioned, the ORM allows us to represent database object with a Python `model` class. Nautobot has a ton of pre-defined models, or database objects, such as Locations, Users, Power panels, and Racks. They are automatically imported for us to save us time. 
+另一件要注意的事情是所有的`import`命令。如前所述，ORM允许我们用Python`model`类表示数据库对象。Nautobot有大量预定义的模型或数据库对象，如位置、用户、电源面板和机架。它们会自动为我们导入以节省时间。
 
 > [!NOTE]
-> The models also include the not-so-obvious database objects, such as permissions, computed fields, configuration context, etc. 
+> 这些模型还包括不那么明显的数据库对象，例如权限、计算字段、配置上下文等。
 
-The best way to learn Django ORM and its usage in Nautobot is with some examples. So let's take Django ORM for a spin using the nbshell, shall we? 
+学习Django ORM及其在Nautobot中的用法的最好方法是通过一些示例。所以让我们使用nbshell来尝试Django ORM吧？
 
-We know we have some location data already populated, we can simply use the `objects.all()` query to retrieve them: 
+我们知道已经填充了一些位置数据，我们可以简单地使用`objects.all()`查询来检索它们：
 
 ```
 >>> Location.objects.all()
 <LocationQuerySet [<Location: Baltimore>, <Location: Boston>, <Location: Chicago>, <Location: Columbus>, <Location: East Coast>, <Location: Indianapolis>, <Location: Jacksonville>, <Location: New York City>, <Location: New York HQ>, <Location: Philadelphia>, <Location: Richmond>, <Location: Washington, D.C.>]>
 ```
 
-What we got back is a [Django QuerySet](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#django.db.models.query.QuerySet) that represents a collection of objects from the database, in this case, Location. In order to make use of it, we typically assign the result to a variable that can be iterated over: 
+我们得到的是一个[Django QuerySet](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#django.db.models.query.QuerySet)，它表示来自数据库的一个对象集合，在这个例子中是Location。为了使用它，我们通常将结果分配给一个可以迭代的变量：
 
 ```
 >>> locations = Location.objects.all()
@@ -162,10 +162,10 @@ Richmond
 Washington, D.C.
 ```
 
-We can also apply filters for the returned data. Since we have two location types, `store` and `office`, we can filter via those two types: 
+我们也可以对返回的数据应用过滤器。由于我们有两个位置类型，`store`和`office`，我们可以通过这两个类型进行过滤：
 
 > [!IMPORTANT] 
-> Notice the syntax of the filter is the name of the field (location_type), followed by a double underscore (`__`), followed by the name of the field (name). This is the [Django QuerySet API convention](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#queryset-api-reference).  
+> 注意过滤器的语法是字段的名称(location_type)，后跟双下划线(`__`)，后跟字段的名称(name)。这是[Django QuerySet API约定](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#queryset-api-reference)。
 
 ```
 >>> office_locations = Location.objects.filter(location_type__name="Office")
@@ -193,7 +193,7 @@ Richmond
 Washington, D.C.
 ```
 
-We can also further chain the search filters: 
+我们还可以进一步链接搜索过滤器：
 
 ```
 >>> bos_store_locations = Location.objects.filter(location_type__name="Store").get(name="Boston")
@@ -205,21 +205,21 @@ We can also further chain the search filters:
 datetime.datetime(2024, 9, 21, 20, 51, 49, 674314, tzinfo=datetime.timezone.utc)
 ```
 
-There are many more filters we can use, we can consult the [Django queries API documentation](https://docs.djangoproject.com/en/5.1/topics/db/queries/#retrieving-specific-objects-with-filters) for additional ways we can filter the `QuerySet` results. 
+我们可以使用更多的过滤器，我们可以查阅[Django查询API文档](https://docs.djangoproject.com/en/5.1/topics/db/queries/#retrieving-specific-objects-with-filters)以了解我们可以对`QuerySet`结果进行的其他方式过滤。
 
-Now that we can read existing data, let's see how we can add and update the model data. 
+既然我们可以读取现有数据，让我们看看如何添加和更新模型数据。
 
-## Adding, Deleting, and Updating Data 
+## 添加、删除和更新数据
 
-Two methods are generally used in Django to create objects, `create()` and `get_or_create()`. 
+Django中通常使用两种方法来创建对象，`create()`和`get_or_create()`。
 
-The `create` method will create the object and return the object while the `get_or_create` method will either get the object if it exists or create the object if it does not, it will also return a second object to indicate whether the object was created. 
+`create`方法将创建对象并返回该对象，而`get_or_create`方法将在对象存在时获取它，或在对象不存在时创建该对象，它还将返回第二个对象来指示对象是否被创建。
 
-Let's see the creation in practice, let's go ahead and create another store. We can see from the Web UI that we would need to specify the "Location Type", "Name", "Status" as required fields, and an optional "Parent" field: 
+让我们看看创建的实际效果，让我们继续创建另一个店铺。从Web UI中我们可以看到，我们需要指定"位置类型"、"名称"、"状态"作为必填字段，以及可选的"父级"字段：
 
 ![location_createion_1](images/location_creation_1.png)
 
-Let's create a store with the name of "Charlotte", location type of "Store", with the parent of "East Coast" and set the status to active: 
+让我们创建一个名称为"Charlotte"的店铺，位置类型为"Store"，父级为"East Coast"，并将状态设置为active：
 
 ```
 >>> charlotte = Location.objects.get_or_create(name="Charlotte", location_type="Store", parent="East Coast", status="Active")
@@ -237,12 +237,12 @@ Traceback (most recent call last):
   ...
   File "/usr/local/lib/python3.8/site-packages/django/db/models/fields/__init__.py", line 2690, in to_python
     raise exceptions.ValidationError(
-django.core.exceptions.ValidationError: ['“Store” is not a valid UUID.']
+django.core.exceptions.ValidationError: ['"Store" is not a valid UUID.']
 ```
 
-Hum... we received an error of "Store is not a valid UUID." As it turns out, those are Python objects that are needed as inputs. 
+嗯...我们收到了"Store不是有效的UUID"的错误。事实证明，这些是作为输入所需的Python对象。
 
-Let's try that again by grabbing the necessary objects. Each of these objects are represented by their unique `UUID` in the system:  
+让我们通过获取必要的对象再试一次。这些对象中的每一个都由系统中的唯一`UUID`表示：
 
 ```
 >>> location_type_store = LocationType.objects.get(name="Store")
@@ -256,7 +256,7 @@ UUID('108625f7-15de-4546-9521-4e04125468de')
 UUID('023e4472-398a-4351-a82f-743e69085cc3')
 ```
 
-We can use the `get_or_create` method to create the location, remember we mention in the `get_or_create` method two objects are returned, one is the object itself (location) and the second is the status of whether the object is created or not (true or false), which is why we assign two variables to this command: 
+我们可以使用`get_or_create`方法来创建位置，记住我们在`get_or_create`方法中提到返回两个对象，一个是对象本身(location)，第二个是对象是否被创建的状态(true或false)，这就是为什么我们为此命令分配两个变量的原因：
 
 ```
 >>> location, created = Location.objects.get_or_create(name="Charlotte", location_type=location_type_store, parent=location_eastcoast, status=status_active)
@@ -270,33 +270,33 @@ We can use the `get_or_create` method to create the location, remember we mentio
 True
 ```
 
-We can either use the location query to see the newly created store or just browse to the Web UI: 
+我们可以使用location查询来查看新创建的店铺，或者只是浏览Web UI：
 
 ![location_creation_2](images/location_creation_2.png)
 
-This location is created in the database as we entered the commands. But if you feel a bit strange to create database entries so easily in the shell, you are not alone. 
+这个位置在我们输入命令时在数据库中被创建。但如果你觉得在shell中如此轻松地创建数据库条目有点奇怪，你并不孤单。
 
-One of the features Django offers is to validate data before it is saved with `validated_save()` method. It helps to catch any error to see if, say, there are duplicated names. It is a good practice to use it before we commit the change. 
+Django提供的功能之一是在使用`validated_save()`方法保存前验证数据。它有助于捕获任何错误，以查看是否存在，比如重复的名称。这是一个很好的做法，在我们提交更改之前使用它。
 
-Let's go ahead and delete the previously created site: 
+让我们继续删除之前创建的站点：
 
 ```
 >>> Location.objects.filter(name="Charlotte").delete()
 (1, {'dcim.Location': 1})
 ```
 
-Then recreate and save it: 
+然后重新创建并保存它：
 
 ```
 >>> location, created = Location.objects.get_or_create(name="Charlotte", location_type=location_type_store, parent=location_eastcoast, status=status_active)
 >>> location.validated_save()
 ```
 
-We can also update the object by retrieving it and update it. We see the new location does not have a description: 
+我们也可以通过检索对象并更新它来更新对象。我们看到新位置没有描述：
 
 ![location_update_1](images/location_update_1.png)
 
-We can update the description with the following steps: 
+我们可以用以下步骤更新描述：
 
 ```
 >>> charlotte = Location.objects.get(name="Charlotte")
@@ -310,24 +310,22 @@ We can update the description with the following steps:
 >>> charlotte.validated_save()
 ```
 
-The description is added to the new site: 
+描述被添加到新站点：
 
 ![location_update_2](images/location_update_2.png)
 
-If you are thinking, "Why would I not just update the site in the web interface?" I don't blame you. For simple operations, it is much easier to do it in the web interface. However, if we need to add multiple objects programmatically via scripts, or if we need to query information via script, `Django QuerySet` is our friend. 
+如果你在想，"我为什么不直接在web界面中更新站点？"我不会责怪你。对于简单的操作，在web界面中做要容易得多。但是，如果我们需要通过脚本以编程方式添加多个对象，或者我们需要通过脚本查询信息，`Django QuerySet`是我们的朋友。
 
-We made a lot of progress today, Django QuerySet is definitely a powerful tool that we will use for future challenges. 
+我们今天取得了很大进展，Django QuerySet绝对是一个强大的工具，我们将在未来的挑战中使用它。
 
-## Day 5 To Do
+## 第5天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在[https://github.com/codespaces/](https://github.com/codespaces/)上停止代码空间实例。
 
-Go ahead and post a screenshot of your favorite ORM query on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+继续在你选择的任何社交媒体上发布你最喜欢的ORM查询的屏幕截图，确保你使用标签`#100DaysOfNautobot` `#JobsToBeDone`并标记`@networktocode`，这样我们可以分享你的进展！
 
-In tomorrow's challenge, we get back to augment our Nautobot Jobs. See you tomorrow! 
+在明天的挑战中，我们回到增强我们的Nautobot Jobs。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+5+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
 [LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 5 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
-
-
