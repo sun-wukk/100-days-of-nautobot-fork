@@ -1,21 +1,20 @@
-# Change VLAN Job 
+# VLAN 变更 Job
 
-In Day 10's challenge, we were able to use Nautobot Jobs to perform 'show' commands on the devices Nautobot knows about. In today's challenge, we will move one step further in performing commands that make operational changes, namely changing vlan on a port. 
+在第 10 天的挑战中，我们成功使用 Nautobot Jobs 对 Nautobot 管理的设备执行了 'show' 命令。在今天的挑战中，我们将更进一步，执行能够进行运维变更的命令，即更改端口上的 VLAN。
 
-Before we started, let's prepare the lab environment as we are doing it a bit different in today's lab. 
+在开始之前，让我们先准备好实验环境，今天的实验方式略有不同。
 
-## Environment Setup
+## 环境配置
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
 > [!IMPORTANT]
-> If you have enough Codespace credit or do not mind paying the fee to have a better experience, you should launch the Codespace instance with more core. How much more? I would start with `4-core`. 
+> 如果您有足够的 Codespace 额度，或不介意付费以获得更好的体验，建议使用更多核心启动 Codespace 实例。建议从 `4核` 开始。
 
 > [!TIP]
-> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. 
+> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。
 
-We will follow the same steps to start Nautobot: 
-
+按照以下步骤启动 Nautobot：
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -24,27 +23,24 @@ $ invoke db-import
 $ invoke debug
 ```
 
-Let's upload and prepare cEOS image and start Containerlab: 
+上传并准备 cEOS 镜像，然后启动 Containerlab：
 
 > [!IMPORTANT]
-> Remember to substitute the version matches the version downloaded. 
+> 请记得替换为与您下载版本匹配的版本号。
 
 > [!WARNING]
-> In the example below, the file was already unzipped, it does not have the `.zip` file extension. Please include the `.zip` extension as necessary. 
-
+> 在以下示例中，文件已解压，不含 `.zip` 扩展名。请根据实际情况添加 `.zip` 扩展名。
 ```
 $ docker import cEOS64-lab-4.32.0F.tar ceos:4.32.0F
 ```
 
-For this lab we only needed the BOS devices: 
-
+本实验只需要 BOS 设备：
 ```
 $ cd clab/
 $ sudo containerlab deploy --topo ceos-lab.clab.yml --node-filter bos-acc-01,bos-rtr-01
 ```
 
-Let's create a file for today's challenge. We can either do this via the shared directory or directly in the Nautobot docker container: 
-
+为今天的挑战创建文件，可以通过共享目录或直接在 Nautobot Docker 容器中操作：
 ```
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -54,17 +50,16 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch operation_jobs.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot operation_jobs.py
 ```
 
-The environment is now setup for today's challenge.  
+今天挑战的环境已配置完毕。
 
 > [!NOTE]
-> Today's challenge is an extension of Day 10's challenge, please feel free to copy and paste the final version of Day 10's Job before continuing.  
+> 今天的挑战是第 10 天挑战的延伸，请随时将第 10 天 Job 的最终版本复制粘贴过来后再继续。
 
-In the next step, we will create a script that allows us to change the VLAN configuration on a port. 
+下一步，我们将创建一个允许更改端口 VLAN 配置的脚本。
 
-## VLAN Change Job
+## VLAN 变更 Job
 
-As usual, we start with the imports: 
-
+照例，先从导入开始：
 ```
 import os
 
@@ -78,20 +73,18 @@ from nautobot.ipam.models import VLAN
 from nautobot.apps.jobs import JobButtonReceiver
 ```
 
-We will use the special global variable ```name``` to indicate the name of the Jobs: 
-
+使用特殊全局变量 ```name``` 来指定 Jobs 的名称：
 ```
 name = "Network Operations"
 ```
 
-In the first part of the job, we want to achieve the following: 
+在 Job 的第一部分，我们希望实现以下功能：
 
-1. Pick a location from the existing locations. 
-2. Pick a device from the selected location. 
-3. Only have Ethernet as the option to allow for VLAN change (we do not want to change vlan on, say, the loopback interfaces). 
+1. 从现有位置中选择一个位置。
+2. 从所选位置中选择一台设备。
+3. 仅将以太网接口作为 VLAN 变更的选项（我们不希望在环回接口等接口上更改 VLAN）。
 
-How do we do that? We can use ```query_params``` to limit the scope: 
-
+如何实现？我们可以使用 ```query_params``` 来限制范围：
 ```
 class ChangeVLAN(Job):
     device_location = ObjectVar(model=Location, required=False)
@@ -112,12 +105,11 @@ class ChangeVLAN(Job):
     )
 ```
 
-Notice we use ```"name__ic": "Ethernet"``` with double underscore to indicate name "includes" keyword of "Ethernet". 
+注意我们使用 ```"name__ic": "Ethernet"```，双下划线表示名称"包含"关键字"Ethernet"。
 
-Then we can define a ```IntegerVar``` to enter the VLAN number as well as the Meta class for meta information: 
-
+然后定义 ```IntegerVar``` 用于输入 VLAN 编号，以及包含元信息的 Meta 类：
 ```
-    # Specify a job input VLAN to be implemented
+    # 指定要配置的 VLAN 编号
     vlan = IntegerVar()
     
     
@@ -126,37 +118,36 @@ Then we can define a ```IntegerVar``` to enter the VLAN number as well as the Me
         description = "Change VLAN based on Selected Port."
 ```
 
-In the main ```run()``` method, we will perform the normal checks, then use Netmiko to execute the command: 
-
+在主 ```run()``` 方法中，执行常规检查后使用 Netmiko 执行命令：
 ```
     def run(self, device_location, device, interface, vlan):
-        """Run method for executing the checks on the device."""
+        """执行设备检查的 run 方法。"""
         self.logger.info(f"Device: {device.name}, Interface: {interface}")
 
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
             username="admin",
             password="admin",
         )
 
-        # Easy mapping of platform to device command
+        # 平台与设备命令的简单映射
         COMMAND_MAP = {
             "cisco_nxos": [f"interface {interface}", f"switchport access vlan {vlan}"],
             "arista_eos": [f"interface {interface}", f"switchport access vlan {vlan}"],
@@ -171,16 +162,15 @@ In the main ```run()``` method, we will perform the normal checks, then use Netm
         net_connect.disconnect()
         self.logger.info(f"This is the output: {output}")
 
-        # If an excpetion is not raise the configuration was implemented successfully
+        # 如果未抛出异常，则配置已成功下发
         self.logger.info(
             interface, f"Successfully added to {interface.name} on {device.name}!"
         )
 ```
 
-In the run method, we used COMMAND_MAP to correlate the potential differences in command execution between "cisco_nxos" and "arista_eos": 
-
+在 run 方法中，我们使用 COMMAND_MAP 来处理 "cisco_nxos" 和 "arista_eos" 之间潜在的命令差异：
 ```
-        # Easy mapping of platform to device command
+        # 平台与设备命令的简单映射
         COMMAND_MAP = {
             "cisco_nxos": [f"interface {interface}", f"switchport access vlan {vlan}"],
             "arista_eos": [f"interface {interface}", f"switchport access vlan {vlan}"],
@@ -190,8 +180,7 @@ In the run method, we used COMMAND_MAP to correlate the potential differences in
         self.logger.info(f"This is the command: {commands}")
 ```
 
-The final step is to register the job: 
-
+最后一步是注册 Job：
 ```
 register_jobs(
     ChangeVLAN,  
@@ -199,26 +188,25 @@ register_jobs(
 )
 ```
 
-We can enable the job and take it for a spin: 
+启用 Job 并进行测试：
 
 ![change_vlan_1](images/change_vlan_1.png)
 
-On the result page, we can see the command being applied as well as the result: 
+在结果页面上，可以看到命令已下发以及执行结果：
 
 ![change_vlan_2](images/change_vlan_2.png)
 
-This is great, we can change the VLAN on a port with Nautobot! 
+非常棒，我们可以通过 Nautobot 更改端口上的 VLAN 了！
 
-Let's make one more improvement, instead of just use a ```IntegerVar``` to indicate the VLAN number, we should scope the VLAN to only existing vlan's. 
+让我们再做一个改进：与其使用 ```IntegerVar``` 手动输入 VLAN 编号，不如将 VLAN 的范围限定为已存在的 VLAN。
 
-## VLAN Change based on Function 
+## 基于已有 VLAN 的 VLAN 变更
 
-We should already have VLAN 10 and 20 created, but feel free to create more if you'd like: 
+我们应该已经创建了 VLAN 10 和 VLAN 20，如有需要可以创建更多：
 
 ![create_vlans](images/create_vlans.png)
 
-We can create another Job to scope the VLAN change to only existing VLANs: 
-
+我们可以创建另一个 Job，将 VLAN 变更范围限定为已存在的 VLAN：
 ```
 class ChangeVLAN_by_Function(Job):
     device_location = ObjectVar(model=Location, required=False)
@@ -248,33 +236,33 @@ class ChangeVLAN_by_Function(Job):
         description = "Change VLAN on Port by existing VLAN."
 
     def run(self, device_location, device, interface, vlan):
-        """Run method for executing the checks on the device."""
+        """执行设备检查的 run 方法。"""
         self.logger.info(f"Device: {device.name}, Interface: {interface}")
 
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
             username="admin",
             password="admin",
         )
 
-        # Easy mapping of platform to device command
+        # 平台与设备命令的简单映射
         COMMAND_MAP = {
             "cisco_nxos": [f"interface {interface}", f"switchport access vlan {vlan.vid}"],
             "arista_eos": [f"interface {interface}", f"switchport access vlan {vlan.vid}"],
@@ -289,7 +277,7 @@ class ChangeVLAN_by_Function(Job):
         net_connect.disconnect()
         self.logger.info(f"This is the output: {output}")
 
-        # If an excpetion is not raise the configuration was implemented successfully
+        # 如果未抛出异常，则配置已成功下发
         self.logger.info(
             interface, f"Successfully added VLAN {vlan.name} to {interface.name} on {device.name}!"
         )
@@ -302,14 +290,13 @@ register_jobs(
 )
 ```
 
-Now when we go to the job, only existing VLAN will show up as the options: 
+现在进入该 Job 时，下拉选项中只会显示已存在的 VLAN：
 
 ![vlan_based_on_functions](images/vlan_based_on_functions.png)
 
-## Final Script 
+## 最终脚本
 
-Here is the final version of the Job file:
-
+以下是 Job 文件的最终版本：
 ```
 import os
 
@@ -355,26 +342,26 @@ class CommandRunner(Job):
     def run(self, device_location, device, commands):
         self.logger.info("Device name: %s", device.name)
     
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
-            # username=os.getenv("DEVICE_USERNAME"),  # change to use user_name
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
+            # username=os.getenv("DEVICE_USERNAME"),  # 改为使用 user_name
             # password=os.getenv("DEVICE_PASSWORD"),
             username="admin",
             password="admin",
@@ -403,7 +390,7 @@ class ChangeVLAN(Job):
         }
     )
 
-    # Specify a job input VLAN to be implemented
+    # 指定要配置的 VLAN 编号
     vlan = IntegerVar()
     
     
@@ -412,33 +399,33 @@ class ChangeVLAN(Job):
         description = "Change VLAN based on Selected Port."
 
     def run(self, device_location, device, interface, vlan):
-        """Run method for executing the checks on the device."""
+        """执行设备检查的 run 方法。"""
         self.logger.info(f"Device: {device.name}, Interface: {interface}")
 
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
             username="admin",
             password="admin",
         )
 
-        # Easy mapping of platform to device command
+        # 平台与设备命令的简单映射
         COMMAND_MAP = {
             "cisco_nxos": [f"interface {interface}", f"switchport access vlan {vlan}"],
             "arista_eos": [f"interface {interface}", f"switchport access vlan {vlan}"],
@@ -453,7 +440,7 @@ class ChangeVLAN(Job):
         net_connect.disconnect()
         self.logger.info(f"This is the output: {output}")
 
-        # If an excpetion is not raise the configuration was implemented successfully
+        # 如果未抛出异常，则配置已成功下发
         self.logger.info(
             interface, f"Successfully added to {interface.name} on {device.name}!"
         )
@@ -487,33 +474,33 @@ class ChangeVLAN_by_Function(Job):
         description = "Change VLAN on Port by existing VLAN."
 
     def run(self, device_location, device, interface, vlan):
-        """Run method for executing the checks on the device."""
+        """执行设备检查的 run 方法。"""
         self.logger.info(f"Device: {device.name}, Interface: {interface}")
 
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
             username="admin",
             password="admin",
         )
 
-        # Easy mapping of platform to device command
+        # 平台与设备命令的简单映射
         COMMAND_MAP = {
             "cisco_nxos": [f"interface {interface}", f"switchport access vlan {vlan.vid}"],
             "arista_eos": [f"interface {interface}", f"switchport access vlan {vlan.vid}"],
@@ -528,7 +515,7 @@ class ChangeVLAN_by_Function(Job):
         net_connect.disconnect()
         self.logger.info(f"This is the output: {output}")
 
-        # If an excpetion is not raise the configuration was implemented successfully
+        # 如果未抛出异常，则配置已成功下发
         self.logger.info(
             interface, f"Successfully added VLAN {vlan.name} to {interface.name} on {device.name}!"
         )
@@ -539,20 +526,18 @@ register_jobs(
     ChangeVLAN_by_Function,
     CommandRunner,
 )
-
 ```
 
-We have done a lot in today's challenge. Let's wrap up and come back tomorrow for another day's challenge. 
+今天的挑战收获颇丰。让我们先告一段落，明天继续新的挑战。
 
-## Day 11 To Do
+## 第 11 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Can you think another improvement we can make to the VLAN change job? Go ahead and post your thoughts on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+您能想到对 VLAN 变更 Job 还可以做哪些改进吗？欢迎在社交媒体上发表您的想法，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will get into Job Buttons. See you tomorrow! 
+在明天的挑战中，我们将深入了解 Job Buttons。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+11+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 11 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
-
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 11 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
