@@ -1,15 +1,15 @@
-# Django Example - Part 2. Creating New Data Models
+# Django 入门（二）：创建数据模型
 
-Building from yesterday's challenge, in today's challenge, we will create two new database models for our new `polls` app. 
+在昨天的基础上，今天我们将为 `polls` 应用创建两个新的数据库模型。
 
-## Code Example
+## 代码示例
 
-We will create two models, Question and Choice. The [Django Tutorial Part 2](https://docs.djangoproject.com/en/5.1/intro/tutorial02/) does a good job explaining the meaning of the fields as well as relationships. Please refer to the tutorial for more information as even just copy/paste that here would be pretty extensive. 
+我们将创建 `Question`（问题）和 `Choice`（选项）两个模型。[Django 教程第二部分](https://docs.djangoproject.com/en/5.1/intro/tutorial02/)对各字段含义及模型间关系有详尽的讲解，请参阅原文以获取更多信息。
 
-Here is the content of the `polls/models.py` file: 
+`polls/models.py` 文件内容如下：
 
-
-```python polls/models.py
+```python
+# polls/models.py
 from django.db import models
 
 class Question(models.Model):
@@ -28,9 +28,9 @@ class Choice(models.Model):
         return self.choice_text
 ```
 
-Django provides tools of `makemigrations` and `migrate` to allow database changes to take effect. Again, refer to the [Django Tutorial 2](https://docs.djangoproject.com/en/5.1/intro/tutorial02/) for more information on their purpose. 
+Django 提供了 `makemigrations` 和 `migrate` 两个命令，用于将数据库结构的变更落地生效。关于这两个命令的具体作用，请参阅 [Django 教程第二部分](https://docs.djangoproject.com/en/5.1/intro/tutorial02/)。
 
-We will simply perform the migration for the changes to take effect: 
+这里我们直接执行迁移，使变更生效：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py makemigrations polls
@@ -63,17 +63,17 @@ Running migrations:
   Applying sessions.0001_initial... OK
 ```
 
-Django provides an admin interface out of the box to manage the database entries, but we will need to register the database models in the `polls/admin.py` file: 
+Django 内置了一套管理后台，可以直接管理数据库条目，但我们需要先在 `polls/admin.py` 中注册数据库模型：
 
-```python 
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/admin.py 
+```python
+# polls/admin.py
 from django.contrib import admin
 from .models import Question
 
 admin.site.register(Question)
 ```
 
-Let's create the superuser "admin" with "admin" for the password for our project: 
+为项目创建超级管理员账户，用户名和密码均设为 "admin"：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py createsuperuser
@@ -88,34 +88,34 @@ Bypass password validation and create user anyway? [y/N]: y
 Superuser created successfully.
 ```
 
-Start the development server again: 
+重新启动开发服务器：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py runserver 0.0.0.0:8080
 ```
 
-We can access the admin interface by appending the `/admin` at the end of the URL: 
+在 URL 末尾加上 `/admin` 即可访问管理后台：
 
 ![admin_1](images/admin_1.png)
 
-We can create new questions by clicking on the `+ Add` button: 
+点击 `+ Add` 按钮可以创建新问题：
 
 ![admin_2](images/admin_2.png)
 
-Notice the text, date, and time field on the page, we can use teh `Today` and `Now` button to quickly add date and time: 
+页面上提供了文字、日期和时间输入字段，可以用 `Today` 和 `Now` 按钮快速填入当前日期和时间：
 
 ![admin_3](images/admin_3.png)
 
-Great job in completing today's challenge, tomorrow we will create new views and templates. 
+出色地完成了今天的挑战！明天我们将创建新的视图和模板。
 
-## Day 47 To Do
+## 第 47 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
 
-Go ahead and post a screenshot of the new admin interface modifying the polls database entries on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+请在你选择的社交媒体上发布在管理后台操作 polls 数据库条目的截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
 
-In tomorrow's challenge, we will be creating new views and HTML templates. See you tomorrow! 
+明天的挑战，我们将创建新的视图和 HTML 模板。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+47+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 47 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 47 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
