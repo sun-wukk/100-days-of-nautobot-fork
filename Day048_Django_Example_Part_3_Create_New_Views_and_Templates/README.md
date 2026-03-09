@@ -1,15 +1,15 @@
-# Django Example - Part 3. Create New Views and Templates
+# Django 入门（三）：创建视图与模板
 
-We will create new views and templates for the `polls` app we created in the last two days. 
+今天，我们将为过去两天搭建的 `polls` 应用创建新的视图和模板。
 
-Today's challenge roughly follows the [Django Tutorial Part 3](https://docs.djangoproject.com/en/5.1/intro/tutorial03/) from the official Django documentation. They do a great job explaining in more detail about views, url pattern, querysets, and other related code. Please take a look at the page for detailed explanation. 
+本次挑战大致参照 Django 官方文档的[教程第三部分](https://docs.djangoproject.com/en/5.1/intro/tutorial03/)，该页面对视图、URL 匹配模式、查询集及相关代码有更详尽的讲解，建议参阅原文深入理解。
 
 > [!IMPORTANT]
-> We will move fast in this condensed version of the tutorial. The emphasis will be on moving quickly to have a working app to see the main moving parts of Django. The [Django Tutorial](https://docs.djangoproject.com/en/5.1/intro/tutorial01/) does a fantastic job in explaining the details as well as providing additional resources, please refer to the tutorial for more details.
+> 这是一个精简版教程，节奏较快，重点在于快速搭出一个可运行的应用，以便直观感受 Django 的各个核心组成部分。[Django 官方教程](https://docs.djangoproject.com/en/5.1/intro/tutorial01/)对细节有非常出色的讲解，并附有丰富的延伸资料，如需深入了解请参阅原文。
 
-## Code Example
+## 代码示例
 
-We will modify our `polls/views.py` as follows, consult the [Django Tutorial Part 3](https://docs.djangoproject.com/en/5.1/intro/tutorial03/) page for more detail on Django queryset and context: 
+按如下内容修改 `polls/views.py`，关于 Django 查询集与上下文的详细说明，请参阅[教程第三部分](https://docs.djangoproject.com/en/5.1/intro/tutorial03/)：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/views.py 
@@ -26,7 +26,7 @@ def detail(request, question_id):
     return render(request, 'polls/detail.html', {'question': question})
 ```
 
-We will update the `polls/urls.py` to wire it up to the detail view: 
+更新 `polls/urls.py`，将详情视图的路由接入其中：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/urls.py 
@@ -39,15 +39,15 @@ urlpatterns = [
 ]
 ```
 
-If we take a look at the views, we know the views uses HTML templates under `polls/index.html` and `polls/detail.html`. 
+观察视图代码可以发现，它依赖 `polls/index.html` 和 `polls/detail.html` 这两个 HTML 模板。
 
-The default template location is usually a point of confusion. By default, Django expects a `templates` directory under the app folder, then the name we specified. Since we specify `polls/<file>` as the path, we will create `polls/templates/polls` directory with `index.html` and `detail.html` inside: 
+模板的默认存放位置往往让初学者感到困惑。Django 默认在应用目录下查找 `templates` 子目录，再按指定路径寻找模板文件。由于我们指定的路径是 `polls/<文件名>`，因此需要创建 `polls/templates/polls` 目录，并在其中放置 `index.html` 和 `detail.html`：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ mkdir -p polls/templates/polls
 ```
 
-Just to be extra clear, here is the file directory and files under `polls/`:  
+为了更直观地展示，以下是 `polls/` 目录的完整结构：
 
 ```shell
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ tree polls/
@@ -80,10 +80,10 @@ polls/
 5 directories, 19 files
 ```
 
-Here is the code for `index.html`: 
+`index.html` 代码如下：
 
-```html index.html 
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/templates/polls/index.html  
+```html
+<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -100,10 +100,9 @@ Here is the code for `index.html`:
 </html>
 ```
 
-Here is the code for `detail.html`: 
+`detail.html` 代码如下：
 
 ```html
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/templates/polls/detail.html 
 <!DOCTYPE html>
 <html>
 <head>
@@ -120,30 +119,30 @@ Here is the code for `detail.html`:
 </html>
 ```
 
-Now launch the development server again: 
+重新启动开发服务器：
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py runserver 0.0.0.0:8080
 ```
 
-This is the index page for the `polls` app: 
+这是 `polls` 应用的首页：
 
 ![polls_1](images/polls_1.png)
 
-Click on the question we can see the detail of the question: 
+点击某个问题，可以查看该问题的详情：
 
 ![polls_2](images/polls_2.png)
 
-We are still missing the actual poll counts, we will add that in tomorrow's challenge. 
+目前投票统计功能尚未实现，我们将在明天的挑战中补上这一部分。
 
-## Day 48 To Do
+## 第 48 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
 
-Go ahead and post a screenshot of new pages we created in today's challenge on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+请在你选择的社交媒体上发布今天创建的新页面截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
 
-In tomorrow's challenge, we will finish this Django example app. See you tomorrow! 
+明天的挑战，我们将完成这个 Django 示例应用的收尾工作。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+48+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 48 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 48 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
