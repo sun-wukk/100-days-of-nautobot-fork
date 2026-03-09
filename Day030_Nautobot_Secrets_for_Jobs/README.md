@@ -1,25 +1,23 @@
-# Accessing Secrets in Jobs
+# 在 Jobs 中访问 Secrets
 
-For obvious reasons, we need to keep confidential information such as API tokens, device access username and passwords as secrets. In Nautobot, secrets management can be found in [Secrets and Security](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/secret/#secrets-and-security). 
+出于显而易见的原因，我们需要将 API 令牌、设备访问用户名和密码等机密信息作为 Secret 保存。在 Nautobot 中，Secrets 管理功能可以在 [Secrets and Security](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/secret/#secrets-and-security) 中找到。
 
-There are a few concepts when it comes to secrets management within Nautobot: 
+Nautobot 中的 Secrets 管理涉及以下几个概念：
 
-- Secrets: A secrete in Nautobot stores a *reference* on how to retrieve the secret; **not** the secretes themselves. 
-- Secrets Group: Secrets group contains a collection of secrets, which can then be attached to objects such as devices or Git repositories. 
-- Secrets providers: The [providers](https://github.com/nautobot/nautobot-app-secrets-providers) are where the secret values can be fetched, such as environmental variables as well as 3rd party providers such as `HashCorp Valut` and `AWS Secrets Manager`. 
+- **Secrets（密钥）**：Nautobot 中的 Secret 存储的是*如何检索密钥的引用*，而**非**密钥本身。
+- **Secrets Group（密钥组）**：Secrets Group 包含一组密钥集合，可附加到设备或 Git 仓库等对象上。
+- **Secrets providers（密钥提供者）**：[providers](https://github.com/nautobot/nautobot-app-secrets-providers) 是获取密钥实际值的来源，支持环境变量以及 `HashiCorp Vault`、`AWS Secrets Manager` 等第三方提供者。
 
+> [!IMPORTANT]
+> 务必注意，不要在 Job 日志中泄露密钥信息。
 
->[!IMPORTANT]
-> Be careful in making sure the secrets are not leaked in Jobs Logs. 
+让我们来看一个在 Nautobot Jobs 中使用 Secrets 的示例。
 
-Let's go ahead and see an example of using secrets in Nautobot Jobs. 
+## 环境配置
 
-## Environment Setup
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
-
-We will follow the same steps to start Nautobot, you can skip `invoke build` and `invoke db-import` if you restarted an existing instance and `build` and `db-import` was already completed: 
-
+按照以下步骤启动 Nautobot，如果是重启已有实例且 `build` 和 `db-import` 已完成，可以跳过相应步骤：
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -28,27 +26,24 @@ $ invoke db-import
 $ invoke debug
 ```
 
-Let's upload and prepare `cEOS` image and start Containerlab: 
-
+上传并准备 `cEOS` 镜像，然后启动 Containerlab：
 ```
 $ docker import cEOS64-lab-4.32.0F.tar ceos:4.32.0F
 ```
 
-For this lab we only needed the `bos-acc-01` devices: 
-
+本实验只需要 `bos-acc-01` 设备：
 ```
 $ cd ~/100-days-of-nautobot/clab/
 $ sudo containerlab deploy --topo ceos-lab.clab.yml --node-filter bos-acc-01
 ```
 
-The environment is now setup for today's challenge.  
+今天挑战的环境已配置完毕。
 
 ## Command Runner Job
 
-We will use [Day009 Command Runner](https://github.com/nautobot/100-days-of-nautobot/blob/main/Day010_Python_Script_to_Jobs_Part_2/README.md) job as the base for today's challenge. 
+我们将以 [第 9 天的 Command Runner](https://github.com/nautobot/100-days-of-nautobot/blob/main/Day010_Python_Script_to_Jobs_Part_2/README.md) Job 为基础进行今天的挑战。
 
-For reference, this is the content of the Job: 
-
+以下是该 Job 的内容供参考：
 ```python
 import os
 
@@ -94,25 +89,25 @@ class CommandRunner(Job):
     def run(self, device_location, device, commands):
         self.logger.info("Device name: %s", device.name)
     
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.
+            host=device.primary_ip.host,
             username="admin",
             password="admin",
         )
@@ -129,38 +124,36 @@ register_jobs(
 )
 ```
 
-Please make sure the Job can be successfully executed before moving on to the next step, refer back to [Day009 Command Runner](https://github.com/nautobot/100-days-of-nautobot/blob/main/Day010_Python_Script_to_Jobs_Part_2/README.md) if needed: 
+在继续下一步之前，请确保该 Job 能够成功执行，如有需要请参阅 [第 9 天 Command Runner](https://github.com/nautobot/100-days-of-nautobot/blob/main/Day010_Python_Script_to_Jobs_Part_2/README.md)：
 
 ![command_runner_1](images/command_runner_1.png)
 ![command_runner_2](images/command_runner_2.png)
 
-Notice the username and password were hard-coded in the job file: 
-
+注意 Job 文件中的用户名和密码是硬编码的：
 ```python
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.
+            host=device.primary_ip.host,
             username="admin",
             password="admin",
         )
 ```
 
-We will use `Nautobot secrets` instead of hard-coded values in the next step. 
+在下一步中，我们将使用 `Nautobot Secrets` 替换这些硬编码的值。
 
-## Nautobot Secrets 
+## Nautobot Secrets
 
-We will start by creating `secrets`. Navigate to "Secrets -> '+'". We will name the secret 'ARISTA_USERNAME' and 'ARISTA_PASSWORD' from 'Environment variable' as the provider: 
+首先创建 `Secrets`。导航到 "Secrets -> '+'"，将密钥分别命名为 'ARISTA_USERNAME' 和 'ARISTA_PASSWORD'，并选择"环境变量"作为提供者：
 
 ![arista_username](images/arista_username.png)
 
 ![arista_password](images/arista_password.png)
 
-Let's see how we can access the secrets. 
+接下来了解如何访问这些密钥。
 
-## Access Secret Values
+## 访问 Secret 值
 
-We will attach to the nautobot container and set the two environment variables: 
-
+连接到 Nautobot 容器并设置两个环境变量：
 ```
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 
@@ -168,8 +161,7 @@ root@ee2753f052ae:/opt/nautobot# export ARISTA_USERNAME="admin"
 root@ee2753f052ae:/opt/nautobot# export ARISTA_PASSWORD="admin"
 ```
 
-We can launch `nbshell` and see how to access the values of the secrets: 
-
+启动 `nbshell` 并查看如何访问密钥的值：
 ```
 root@ee2753f052ae:/opt/nautobot# nautobot-server nbshell
 ...
@@ -182,16 +174,15 @@ root@ee2753f052ae:/opt/nautobot# nautobot-server nbshell
 'admin'
 ```
 
-Now, let's use the secret values in our `command_runner.py` job in the next step. 
+下一步，在 `command_runner.py` Job 中使用这些密钥值。
 
-## Using Secrets in the Job
+## 在 Job 中使用 Secrets
 
-Recall the jobs are executed in asynchronous via nautobot workers, the easiest way to implement new environment variable is to modify the `creds.env` file: 
+由于 Job 通过 Nautobot Worker 以异步方式执行，添加新环境变量最简便的方式是修改 `creds.env` 文件：
 
 ![creds_env_1](images/creds_env_1.png)
 
-We will need to stop and start the nautobot containers: 
-
+需要重启 Nautobot 容器：
 ```
 Ctrl+C
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke debug 
@@ -206,16 +197,15 @@ Attaching to celery_beat-1, celery_worker-1, db-1, nautobot-1, redis-1
 ...
 ```
 
-We can modify the `username` and `password` in the `command_runner.py` file to use secrets: 
-
+修改 `command_runner.py` 文件中的 `username` 和 `password`，改为使用 Secrets：
 ```
 from nautobot.extras.models.secrets import Secret
 
 ...
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
             username=Secret.objects.get(name="ARISTA_USERNAME").get_value(),  
             password=Secret.objects.get(name="ARISTA_PASSWORD").get_value(),
         )
@@ -227,14 +217,13 @@ from nautobot.extras.models.secrets import Secret
 ...
 ```
 
-We will receive the same result as before, but the job runner uses the secret value instead of hard-coded value: 
+执行结果与之前相同，但 Job 现在使用密钥值而非硬编码值：
 
 ![command_runner_3](images/command_runner_3.png)
 
-## Final Job File
+## 最终 Job 文件
 
-As a reference, here is the final `command_runner.py` file: 
-
+以下是最终版本的 `command_runner.py` 文件供参考：
 ```
 import os
 
@@ -281,25 +270,25 @@ class CommandRunner(Job):
     def run(self, device_location, device, commands):
         self.logger.info("Device name: %s", device.name)
     
-        # Verify that the device has a primary IP
+        # 验证设备是否已设置主 IP
         if device.primary_ip is None:
             self.logger.fatal("Device does not have a primary IP address set.")
             return
 
-        # Verify that the device has a platform associated 
+        # 验证设备是否已关联平台
         if device.platform is None:
             self.logger.fatal("Device does not have a platform set.")
             return
 
-        # check for device driver association
+        # 检查设备驱动关联
         if device.platform.network_driver_mappings.get("netmiko") is None:
             self.logger.fatal("Device mapping for Netmiko is not present, please set.")
             return
 
-        # Connect to the device, get some output - comment this out if you are simulating
+        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
         net_connect = ConnectHandler(
             device_type=device.platform.network_driver_mappings["netmiko"],
-            host=device.primary_ip.host,  # or device.name if your name is an FQDN
+            host=device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
             username=Secret.objects.get(name="ARISTA_USERNAME").get_value(),  
             password=Secret.objects.get(name="ARISTA_PASSWORD").get_value(),
         )
@@ -316,16 +305,16 @@ register_jobs(
 )
 ```
 
-Great job in completing Day 30! 
+恭喜完成第 30 天的挑战！
 
-## Day 30 To Do
+## 第 30 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Go ahead and post a screenshot of the successful execution of the job with nautobot secret on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+欢迎在社交媒体上发布使用 Nautobot Secret 成功执行 Job 的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will see how we can validate routes via external API calls. See you tomorrow! 
+在明天的挑战中，我们将了解如何通过外部 API 调用来验证路由。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+30+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 30 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 30 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
