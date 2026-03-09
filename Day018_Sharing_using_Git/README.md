@@ -1,21 +1,19 @@
-# Using Git Repository to Share Jobs
+# 使用 Git 仓库共享 Jobs
 
-Once we have the Jobs file created, we might want to start sharing with others or have a centralized location to keep changes, allow collaboration, or roll back to previous version if the new changes did not work. 
+Job 文件创建完成后，我们可能希望与他人共享，或建立一个集中化的存储位置，以便协作开发、追踪变更，并在新改动出现问题时回滚到之前的版本。
 
-Job code can be shared using Git repository with the 
-[Git as a Data Source](https://docs.nautobot.com/projects/core/en/stable/user-guide/feature-guides/git-data-source/) feature in Nautobot. 
+Nautobot 提供了 [Git 作为数据源](https://docs.nautobot.com/projects/core/en/stable/user-guide/feature-guides/git-data-source/) 功能，可通过 Git 仓库共享 Job 代码。
 
-Let us see how we can do that in today's exercise. 
+让我们在今天的练习中了解如何实现这一点。
 
-## Environment Setup
+## 环境配置
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
 > [!TIP]
-> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. Remember you only need to start poetry shell and `invoke debug` if you already have an instance running. 
+> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。如果已有实例在运行，只需启动 Poetry 环境并执行 `invoke debug` 即可。
 
-We will follow the same steps to start Nautobot: 
-
+按照以下步骤启动 Nautobot：
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -24,12 +22,11 @@ $ invoke db-import
 $ invoke debug
 ```
 
-The environment is now setup for today's challenge.  
+今天挑战的环境已配置完毕。
 
-## Git Repository Structure
+## Git 仓库结构
 
-I created a simple Git repository for today's exercise at [https://github.com/ericchou1/nautobot-jobs-test-repo](https://github.com/ericchou1/nautobot-jobs-test-repo) that consist of an empty `__init__.py` file and a `jobs` directory: 
-
+我为今天的练习创建了一个简单的 Git 仓库，地址为 [https://github.com/ericchou1/nautobot-jobs-test-repo](https://github.com/ericchou1/nautobot-jobs-test-repo)，仓库包含一个空的 `__init__.py` 文件和一个 `jobs` 目录：
 ```
 # tree nautobot-jobs-test-repo/
 nautobot-jobs-test-repo/
@@ -39,19 +36,16 @@ nautobot-jobs-test-repo/
 └── jobs
     ├── __init__.py
     └── hello_jobs.py
-
 1 directory, 5 files
 ```
 
-The naming of the directory is important as Nautobot will look for a `jobs` folder. We also need the `__init__.py` file to indicate this is a Python module. 
+目录命名非常重要，因为 Nautobot 会查找名为 `jobs` 的文件夹。同时需要 `__init__.py` 文件来标识这是一个 Python 模块。
 
-In the `jobs` directory, we have two files, the `__init__.py` file as well as the `hello_jobs.py` file. The `hello_jobs.py` file consist of what we are already familiar with: 
-
+在 `jobs` 目录中，有两个文件：`__init__.py` 以及我们已经熟悉的 `hello_jobs.py`：
 ```
 from nautobot.apps.jobs import Job
 
 class HelloJobs(Job):
-
     class Meta: 
         name = "Hello Jobs from Git Repo"
 
@@ -59,45 +53,43 @@ class HelloJobs(Job):
         self.logger.debug("This is from the Git repo.")
 ```
 
-The job registration is moved to the `__init__.py` file where we import the class from the `hello_jobs.py` file and register it: 
-
+Job 的注册移至 `__init__.py` 文件中，在该文件中从 `hello_jobs.py` 导入类并进行注册：
 ```
 # cat __init__.py 
 from nautobot.apps.jobs import register_jobs
 from .hello_jobs import HelloJobs
 
-
 register_jobs(HelloJobs)
 ```
 
-We need to register this Git repository as a Jobs data source in Nautobot. 
+接下来需要在 Nautobot 中将此 Git 仓库注册为 Jobs 数据源。
 
-## Register Git Data Source 
+## 注册 Git 数据源
 
-We can register Git repositories as data source under "Extensibility -> Git Repositories": 
+可以在 "Extensibility -> Git Repositories" 下将 Git 仓库注册为数据源：
 
 ![git_data_source_1](images/git_data_source_1.png)
 
-The page is pretty straight forward for the names and slug, make sure you use the right URL and pick `jobs` as the provider. 
+名称和 Slug 的填写较为直观，请确保使用正确的 URL，并将提供者选择为 `jobs`。
 
 ![git_data_source_2](images/git_data_source_2.png)
 
-Once it is successfully synchronized, we should see the job appear under Jobs UI: 
+同步成功后，可以在 Jobs UI 中看到新出现的 Job：
 
 ![git_data_source_3](images/git_data_source_3.png)
 
-As we know by now, the new job will need to be enabled in order to run. 
+如我们所知，新 Job 需要先启用才能运行。
 
-That is it for today's challenge, congratulations on coming this far! 
+今天的挑战到此结束，恭喜您坚持到了这里！
 
-## Day 18 To Do
+## 第 18 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will take a look at the Jobs model. See you tomorrow! 
+在明天的挑战中，我们将深入了解 Jobs 数据模型。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+18+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 18 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 18 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
