@@ -1,12 +1,11 @@
-# Nautobot Server Commands
+# Nautobot Server 命令
 
-Nautobot includes a command-line (CLI) management utility called `nautobot-server`. It is often times used as a single entry point for common administrative tasks. 
+Nautobot 内置了一个名为 `nautobot-server` 的命令行（CLI）管理工具，常用于执行各种常见的管理任务，是一个统一的操作入口。
 
 > [!TIP]
-> If you have prior Django experience, as stated in the [nautobot-server](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/tools/nautobot-server/) documentaiton, `nautobot-server` works exactly as a Django project's `manage.py` script would, with additional Nautobot code. 
+> 如果您有 Django 开发经验，正如 [nautobot-server](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/tools/nautobot-server/) 文档所述，`nautobot-server` 的工作方式与 Django 项目的 `manage.py` 脚本完全相同，但在此基础上添加了 Nautobot 特有的功能。
 
-We have actually been using many of the CLI commands in previous days as aliases. For example, in `Day 003` in the `docker-compose.local.yml` file we saw we use the `nautobot-server runserver 0.0.0.0:8080` to run the development server in the `nautobot` container. In `Day 005`, when we type `invoke nbshell`, the output tells us it is running a docker compose command that is a wrapper for `nautobot-server`, here is an example of the output: 
-
+实际上，我们在前几天已经以别名的形式使用了许多 CLI 命令。例如，在第 3 天的 `docker-compose.local.yml` 文件中，我们使用 `nautobot-server runserver 0.0.0.0:8080` 在 `nautobot` 容器中启动开发服务器。在第 5 天，当我们输入 `invoke nbshell` 时，输出信息告诉我们它实际上是在运行一个 `nautobot-server` 的 Docker Compose 封装命令，示例输出如下：
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke nbshell
 
@@ -15,25 +14,23 @@ Running docker compose command "exec nautobot nautobot-server shell_plus"
 ...
 ```
 
-The documentation for [nautobot-server](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/tools/nautobot-server/) provides the full documentation for the available options. In today's challenge, we will introduce a few examples and options. 
+[nautobot-server](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/tools/nautobot-server/) 文档提供了所有可用选项的完整说明。在今天的挑战中，我们将介绍几个使用示例。
 
-## Environment Setup
+## 环境配置
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
 > [!TIP]
-> We keep lab notes in the [Lab Related Notes](../Lab_Setup/lab_related_notes/README.md) for helpful tips in the various lab scenario. 
+> 我们在 [Lab Related Notes](../Lab_Setup/lab_related_notes/README.md) 中保存了各实验场景的实用技巧，可供参考。
 
-If you stopped the Codespace environment, simply restart it and use the following steps to start Naudotbot, you do not need to rebuild docker instances, nor import the database again: 
-
+如果已停止 Codespace 环境，只需重新启动并按以下步骤运行 Nautobot，无需重建 Docker 实例或重新导入数据库：
 ```bash
 $ cd nautobot-docker-compose/
 $ poetry shell
 $ invoke debug
 ```
 
-If you need to completely rebuild the environment in Codespace, here are the steps: 
-
+如果需要在 Codespace 中完全重建环境，请执行以下步骤：
 ```bash
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -42,19 +39,17 @@ $ invoke db-import
 $ invoke debug
 ```
 
-We do not need to use Containerlab for today's challenge. 
+今天的挑战无需使用 Containerlab。
 
-## Nautobot-Server Examples
+## Nautobot-Server 使用示例
 
-We will need to get into the `nautobot` container shell environment: 
-
+首先进入 `nautobot` 容器的 Shell 环境：
 ```bash
 @ericchou1 ➜ ~ $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@ee2753f052ae:/opt/nautobot#
 ```
 
-The first thing we can try is to run the previously created jobs from the command line using `nautobot-server runjob [module:class] -u [user]`. Assume we have a `hello_job.py file` created with a `HelloWorldwithLogs` job inside: 
-
+首先，我们可以尝试使用 `nautobot-server runjob [module:class] -u [user]` 从命令行运行之前创建的 Job。假设已创建包含 `HelloWorldwithLogs` Job 的 `hello_job.py` 文件：
 ```
 root@ee2753f052ae:/opt/nautobot# nautobot-server runjob hello_job.HelloWorldwithLogs -u admin
 [23:47:37] Running hello_job.HelloWorldwithLogs...
@@ -73,8 +68,7 @@ root@ee2753f052ae:/opt/nautobot# nautobot-server runjob hello_job.HelloWorldwith
 [23:47:38] Finished
 ```
 
-We can use `nautobot-server help` to see the available options: 
-
+可以使用 `nautobot-server help` 查看所有可用选项：
 ```
 root@ee2753f052ae:/opt/nautobot# nautobot-server help
 
@@ -104,8 +98,7 @@ Available subcommands:
 ...
 ```
 
-To see more details about a `subcommand`, we can use `nautobot-server help <subcommand>`, we can use the help menu to see how to create an additional `superuser`: 
-
+要查看某个 `子命令` 的详细说明，可以使用 `nautobot-server help <子命令>`。例如，使用帮助菜单查看如何创建新的超级用户：
 ```
 root@ee2753f052ae:/opt/nautobot# nautobot-server help createsuperuser
 usage: nautobot-server createsuperuser [-h] [--username USERNAME] [--noinput] [--database DATABASE] [--email EMAIL] [--version] [-v {0,1,2,3}] [--settings SETTINGS]
@@ -134,29 +127,28 @@ optional arguments:
   --skip-checks         Skip system checks.
 ```
 
-Let's go ahead and create an additional superuser: 
-
+接下来创建一个新的超级用户：
 ```
 root@ee2753f052ae:/opt/nautobot# nautobot-server createsuperuser
-Username: <username>
-Email address: <email>
-Password: <password>
-Password (again): <password>
+Username: <用户名>
+Email address: <邮箱>
+Password: <密码>
+Password (again): <密码>
 Superuser created successfully.
 ```
 
-Try to log in with the new user in the WebUI! 
+用新账号在 Web UI 中登录试试吧！
 
-## Day 25 To Do
+## 第 25 天待办事项
 
-Great job on completing a 1/4 of the challenges!
+恭喜完成了四分之一的挑战！
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
- Your to-do today is to find another command from the documentation and learn more about it. Go ahead and post which command you find interesting and learned about on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+今天的任务是从文档中找到另一个命令并深入了解它。欢迎在社交媒体上分享您发现的有趣命令，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will enhance our debug skills with `PDB`. See you tomorrow!  
+在明天的挑战中，我们将使用 `PDB` 提升调试技能。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+25+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 25 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 25 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
