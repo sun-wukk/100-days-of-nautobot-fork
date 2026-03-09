@@ -1,27 +1,27 @@
-# Example App Creating Data Models - Part 1
+# 示例 App 数据模型开发（上篇）
 
-For our example app, we will add a new page with a list of useful links as a quick reference. This is what we will end up with at the end of Day 59: 
+在接下来的示例 App 开发中，我们将新增一个"常用链接"页面，作为快速参考工具。到第 59 天结束时，我们最终将实现以下功能：
 
-- A new database model of useful links. 
-- Use the admin panel to add data to the database model. 
-- A new view that integrates the new database model. 
-- A new HTML template to present these links. 
-- A new URL for the new template. 
-- A new navigation link within example_app points to the new URL. 
+- 新建一个"常用链接"数据库模型。
+- 通过管理后台向该模型添加数据。
+- 新建一个整合了新数据模型的视图。
+- 新建一个用于展示这些链接的 HTML 模板。
+- 为新模板配置新的 URL 路由。
+- 在 example_app 中添加指向新 URL 的导航链接。
 
 ![final_version_1](images/final_version_1.png)
 
-We will use the admin panel to add our links: 
+我们将通过管理后台添加链接数据：
 
 ![final_version_1](images/final_version_admin_panel.png)
 
-As with most new app development, we will start with the database model. 
+与大多数新应用开发一样，我们从数据库模型开始。
 
-## Models.py
+## models.py
 
-We know the file to be modified for the example_app is probably named `models.py`, if we look around the nautobot repository, we see this file [models.py](https://github.com/nautobot/nautobot/blob/develop/examples/example_app/example_app/models.py) file. Let's find it in our environment. 
+我们知道示例 App 中需要修改的文件大概叫 `models.py`，在 Nautobot 仓库中找一找，可以找到这个 [models.py](https://github.com/nautobot/nautobot/blob/develop/examples/example_app/example_app/models.py) 文件。来在我们的环境里定位它。
 
-Use the `docker ps` to see the running containers: 
+用 `docker ps` 查看正在运行的容器：
 
 ```
 @ericchou1 ➜ ~ $ docker ps
@@ -34,7 +34,7 @@ a4251f9acfae   redis:6-alpine                        "docker-entrypoint.s…"   
 d5e11fb88308   postgres:13                           "docker-entrypoint.s…"   3 days ago   Up About an hour (healthy)   5432/tcp                                                                                                       nautobot-2-4-db-1
 ```
 
-Attach to the nautobot instance and take a look at the models: 
+进入 nautobot 容器，查看模型文件：
 
 ```
 @ericchou1 ➜ ~ $ docker exec -it nautobot-2-4-nautobot-1 bash
@@ -67,48 +67,47 @@ class ExampleModel(OrganizationalModel):
 @extras_features(
     "custom_validators",
     "export_templates",
-    # "graphql", Not specified here as we have a custom type for this model, see example_app.graphql.types
+    # "graphql"，此处未指定，因为该模型有自定义类型，详见 example_app.graphql.types
     "webhooks",
-    "relationships",  # Defined here to ensure no clobbering: https://github.com/nautobot/nautobot/issues/3592
+    "relationships",  # 在此显式声明以避免冲突：https://github.com/nautobot/nautobot/issues/3592
 )
 class AnotherExampleModel(OrganizationalModel):
     name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
     number = models.IntegerField(default=100)
 
-    # by default the natural key would just be "name" since it's a unique field. But we can override it:
+    # 默认情况下，natural key 仅为 "name"（因为它是唯一字段），但我们可以覆盖这一行为：
     natural_key_field_names = ["name", "number"]
 
     class Meta:
         ordering = ["name"]
-
 ```
 
-We see there are two models, `ExampleModel` and `AnotherExampleModel`. We can verify that in two places in the Web UI. 
+文件中定义了两个模型：`ExampleModel` 和 `AnotherExampleModel`。我们可以在 Web UI 的两处位置验证这一点。
 
-The first place is under `Installed Apps -> Example Nautoobt App` there is a `Data Models` section that lists out the data models: 
+第一处是 `Installed Apps -> Example Nautobot App` 页面，其中的 `Data Models` 区块列出了所有数据模型：
 
 ![example_app_models](images/example_app_models.png)
 
-Another place is from the navigation menu, there is a link for `Example Models` that we can click to see a list view of examples: 
+另一处是导航菜单，其中有一个 `Example Models` 链接，点击后可以看到示例数据的列表视图：
 
 ![example_app_models_2](images/example_app_models_2.png)
 
-Keep these locations in mind as we start to add our own data model. 
+在我们动手添加自己的数据模型时，请记住这两处位置。
 
-The last step is to find this file in our VSCode explorer: 
+最后一步是在 VSCode 资源管理器中找到这个文件：
 
 ![models_file](images/models_file.png)
 
-Congratulations on completing today's task! Finding the right file and knowing where to look might seem trivial, but trust me, it is not, especially for a software project that has been in development for many years!
+恭喜完成今天的任务！找对文件、知道去哪里找，看似微不足道，但相信我，对于一个已有多年开发历史的大型软件项目而言，这绝非易事！
 
-## Day 51 To Do
+## 第 51 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
 
-Go ahead and post a screenshot from any of the steps in today's challenge on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+请在你选择的社交媒体上发布今天任意步骤的截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
 
-In tomorrow's challenge, we will be creating a new database model. See you tomorrow! 
+明天的挑战，我们将正式创建新的数据库模型。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+51+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 51 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 51 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
