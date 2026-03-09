@@ -1,11 +1,10 @@
-# Design Future Sites (Part 2)
+# 设计未来站点（第二部分）
 
-Today marks the second day of the 6-day series of a job that will help us design a future site. 
+今天是为期 6 天的站点设计 Job 系列的第二天。
 
-## Design Future Sites Part 2 Code
+## 设计未来站点第二部分代码
 
-If you had to create a new codespace instance make sure you recreate the file from the previous challenge.
-
+如果您需要重新创建 Codespace 实例，请确保重新创建前一天挑战中的文件。
 ```shell
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -15,13 +14,11 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch create_site_job.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot create_site_job.py
 ```
 
-Here is the Job code from where we left off yesterday.
-
+以下是昨天完成的 Job 代码：
 ```python
-"""Job to create a new site of type POP."""
+"""用于创建 POP 类型新站点的 Job。"""
 
 from django.contrib.contenttypes.models import ContentType
-
 
 from nautobot.apps.jobs import Job, register_jobs
 from nautobot.extras.models.roles import Role
@@ -38,7 +35,7 @@ PREFIX_ROLES = ["p2p", "loopback", "server", "mgmt", "pop"]
 POP_PREFIX_SIZE = 16
 TENANT_NAME = "Data Center"
 ACTIVE_STATUS = Status.objects.get(name="Active")
-# VLAN definitions: key is also used to look up the role.
+# VLAN 定义：键名同时用于查找对应角色
 VLAN_INFO = {
     "server": 1000,
     "mgmt": 99,
@@ -46,34 +43,33 @@ VLAN_INFO = {
 CUSTOM_FIELDS = {
     "role": {"models": [Interface], "label": "Role"},
 }
-# Retrieve the content type for Prefix and VLAN models.
+# 获取 Prefix 和 VLAN 模型的内容类型
 prefix_ct = ContentType.objects.get_for_model(Prefix)
 vlan_ct = ContentType.objects.get_for_model(VLAN)
 
 def create_prefix_roles(logger):
-    """Create all Prefix Roles defined in PREFIX_ROLES and add content types for IPAM Prefix and VLAN."""    
+    """创建 PREFIX_ROLES 中定义的所有前缀角色，并为其添加 IPAM Prefix 和 VLAN 的内容类型。"""    
 
     for role in PREFIX_ROLES:
         role_obj, created = Role.objects.get_or_create(name=role)
-        # Add the Prefix and VLAN content types to the role.
+        # 为角色添加 Prefix 和 VLAN 内容类型
         role_obj.content_types.add(prefix_ct, vlan_ct)
         role_obj.validated_save()
         logger.info(f"Successfully created role {role} with content types for Prefix and VLAN.")
 
 
 def create_tenant(logger):
-    """Create a tenant with the name defined in TENANT_NAME."""
+    """使用 TENANT_NAME 定义的名称创建租户。"""
     tenant_obj, _ = Tenant.objects.get_or_create(name=TENANT_NAME)
     tenant_obj.validated_save()
     logger.info(f"Successfully created Tenant {TENANT_NAME}.")
 
 
 def create_vlans(logger):
-    """Create predefined VLANs defined in VLAN_INFO, and assign the appropriate role."""
-    # Get the active status from the database.
+    """创建 VLAN_INFO 中定义的预设 VLAN，并分配相应角色。"""
 
     for vlan_name, vlan_id in VLAN_INFO.items():
-        # Retrieve the appropriate role based on the VLAN name.
+        # 根据 VLAN 名称获取对应角色
         try:
             role_obj = Role.objects.get(name=vlan_name)
         except Role.DoesNotExist:
@@ -95,7 +91,7 @@ def create_vlans(logger):
             logger.info(f"VLAN '{vlan_name}' with ID {vlan_id} already exists.")
 
 def create_custom_fields(logger):
-    """Create all relationships defined in CUSTOM_FIELDS."""
+    """创建 CUSTOM_FIELDS 中定义的所有关联关系。"""
     for cf_name, field in CUSTOM_FIELDS.items():
         try:
             cf = CustomField.objects.get(key=cf_name)
@@ -112,10 +108,10 @@ def create_custom_fields(logger):
             logger.info(f"Added content type {ct} to custom field '{cf_name}'")
 
 class CreatePop(Job):
-    """Job to create a new site of type POP."""
+    """用于创建 POP 类型新站点的 Job。"""
 
     class Meta:
-        """Metadata for CreatePop."""
+        """CreatePop 的元数据。"""
 
         name = "Create a Point of Presence"
         description = """
@@ -124,10 +120,10 @@ class CreatePop(Job):
         """
 
     def run(self):
-        """Main function to create a site."""
+        """创建站点的主函数。"""
         # ----------------------------------------------------------------------------
-        # Initialize the database with all required objects.
-        # We will build on this in the coming days.
+        # 使用所有必需对象初始化数据库。
+        # 我们将在接下来的几天中逐步扩展。
         # ----------------------------------------------------------------------------
         create_prefix_roles(self.logger)
         create_tenant(self.logger)
@@ -136,29 +132,23 @@ class CreatePop(Job):
 
 
 register_jobs(CreatePop)
-
 ```
 
-## Walkthrough
+## 操作步骤
 
-We will start our modification to the existing code by adding the necessary import statements.
-
+我们将通过添加必要的导入语句开始对现有代码的修改：
 ```python
-
 from itertools import product
 import re
 import yaml
 from nautobot.dcim.models import DeviceType, Manufacturer
 from nautobot.dcim.models.device_component_templates import InterfaceTemplate
-
 ```
 
-As we stated yesterday, today will be all about DeviceTypes. Here is the data we will be using, which will be defined as the constant DEVICE_TYPES_YAML.
+如昨天所述，今天的重点是设备类型（DeviceType）。以下是我们将使用的数据，定义为常量 `DEVICE_TYPES_YAML`。
 
-The YAML content for these device types was retrieved from the community [Nautobot Device Type library](https://github.com/nautobot/devicetype-library). There are many device types there and you should check it out to see all of the ones that are available.
-
+这些设备类型的 YAML 内容来自社区维护的 [Nautobot 设备类型库](https://github.com/nautobot/devicetype-library)，其中包含大量设备类型，建议前往查看所有可用的设备类型。
 ```python
-
 DEVICE_TYPES_YAML = [
     """
     manufacturer: Arista
@@ -189,49 +179,43 @@ DEVICE_TYPES_YAML = [
           mgmt_only: true
     """,
 ]
-
 ```
 
 > [!NOTE]
-We are adding interfaces to the device types which uses the InterfaceTemplate model from device_component_templates and we needed a helper function called `expand_interface_pattern` to use the short interface naming convention of `- pattern: "Ethernet[1-60]/[1-4]"`
+> 我们为设备类型添加了接口，这里使用了来自 `device_component_templates` 的 `InterfaceTemplate` 模型，同时需要一个名为 `expand_interface_pattern` 的辅助函数，用于处理 `- pattern: "Ethernet[1-60]/[1-4]"` 这样的简短接口命名规范。
 
-The method below shows how we are using regex here to match the interface patterns so we can match a pattern and generate a large number of interfaces without having to specify each one in the device type yaml.
-
+以下方法展示了如何使用正则表达式匹配接口模式，从而通过模式匹配批量生成大量接口，而无需在设备类型 YAML 中逐一指定：
 ```python
-
 def expand_interface_pattern(pattern):
     """
-    Expands an interface pattern like 'Ethernet[1-60]/[1-4]' into actual names.
+    将接口模式（如 'Ethernet[1-60]/[1-4]'）展开为实际接口名称列表。
     
-    Supports:
-      - Single range: Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
-      - Nested range: Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
+    支持以下格式：
+      - 单一范围：Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
+      - 嵌套范围：Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
     """
     match = re.findall(r"\[([0-9]+)-([0-9]+)\]", pattern)
     if not match:
-        return [pattern]  # No expansion needed, return as-is.
+        return [pattern]  # 无需展开，直接返回
 
-    # Convert to lists of numbers
+    # 转换为数字列表
     try:
         ranges = [list(range(int(start), int(end) + 1)) for start, end in match]
     except ValueError:
         raise ValueError(f"Invalid range in pattern: {pattern}")
 
-    # Generate base name with placeholders
+    # 生成含占位符的基础名称
     base_name = re.sub(r"\[[0-9]+-[0-9]+\]", "{}", pattern, count=len(ranges))
 
-    # Expand using cartesian product
+    # 使用笛卡尔积展开
     return [base_name.format(*nums) for nums in product(*ranges)]
-
 ```
 
-The other new method we added is ```create_device_types```, which also calls on the ```expand_interface_pattern``` method.
-
+我们新增的另一个方法是 `create_device_types`，它也会调用 `expand_interface_pattern` 方法：
 ```python
-
 def create_device_types(logger):
     """
-    Create DeviceType objects from YAML definitions and add interfaces using InterfaceTemplate.
+    从 YAML 定义创建 DeviceType 对象，并使用 InterfaceTemplate 添加接口。
     """
 
     for device_yaml in DEVICE_TYPES_YAML:
@@ -248,7 +232,7 @@ def create_device_types(logger):
             logger.error("Model not provided in YAML for manufacturer %s", manufacturer_name)
             continue
 
-        # Create DeviceType
+        # 创建 DeviceType
         device_type_defaults = {
             k: data[k] for k in ["part_number", "u_height", "is_full_depth", "comments"] if k in data
         }
@@ -264,7 +248,7 @@ def create_device_types(logger):
         else:
             logger.info(f"DeviceType already exists: {device_type_obj}")
 
-        # Add interfaces using InterfaceTemplate
+        # 使用 InterfaceTemplate 添加接口
         for iface in data.get("interfaces", []):
             pattern = iface.get("pattern")
             iface_type = iface.get("type")
@@ -274,7 +258,7 @@ def create_device_types(logger):
                 logger.error(f"Invalid interface definition in {model_name}: {iface}")
                 continue
 
-            # Generate interfaces from range patterns
+            # 从范围模式生成接口名称
             interface_names = expand_interface_pattern(pattern)
             for iface_name in interface_names:
                 interface_template, created = InterfaceTemplate.objects.get_or_create(
@@ -289,12 +273,10 @@ def create_device_types(logger):
                     logger.info(f"Added interface {iface_name} ({iface_type}) to {model_name}")
 ```
 
-This method is responsible for creating the device type and then adds interfaces using the Nautobot InterfaceTemplate class so that any device created from the device types will be created with the interfaces we specify for the device type.
+该方法负责创建设备类型，并通过 Nautobot 的 `InterfaceTemplate` 类添加接口，确保从该设备类型创建的任何设备都会带有我们为该设备类型指定的接口。
 
-The first part of the method reads the yaml data that we specified in DEVICE_TYPES_YAML. We then check to see if the Manufacturer is already present in Nautobot, and if not, we create it. Manufacturer is a required field for a Device Type and it must be present in the database before the Device Type can be created.
-
+方法的第一部分读取 `DEVICE_TYPES_YAML` 中指定的 YAML 数据，然后检查厂商（Manufacturer）是否已存在于 Nautobot 中，不存在则创建。厂商是设备类型的必填字段，必须在数据库中存在才能创建设备类型。
 ```python
-
     for device_yaml in DEVICE_TYPES_YAML:
         data = yaml.safe_load(device_yaml)
 
@@ -303,19 +285,16 @@ The first part of the method reads the yaml data that we specified in DEVICE_TYP
             logger.error("Manufacturer not provided in YAML definition.")
             continue
         manufacturer_obj, _ = Manufacturer.objects.get_or_create(name=manufacturer_name)
-
 ```
 
-Next, we store all of the data from the yaml file in either defaults except for the manufacturer and model before we try to create the new device type. If the device type already exists we skip in and move on.
-
+接下来，在尝试创建新设备类型之前，将 YAML 文件中除厂商和型号以外的所有数据存入 defaults。如果设备类型已存在，则跳过并继续。
 ```python
-
         model_name = data.pop("model", None)
         if not model_name:
             logger.error("Model not provided in YAML for manufacturer %s", manufacturer_name)
             continue
 
-        # Create DeviceType
+        # 创建 DeviceType
         device_type_defaults = {
             k: data[k] for k in ["part_number", "u_height", "is_full_depth", "comments"] if k in data
         }
@@ -332,8 +311,7 @@ Next, we store all of the data from the yaml file in either defaults except for 
             logger.info(f"DeviceType already exists: {device_type_obj}")
 ```
 
-Finally, we create the interfaces either directly or if we are using a pattern as described above we use the `expand_interface_pattern` method.
-
+最后，直接创建接口，或者如果使用了上述模式，则调用 `expand_interface_pattern` 方法批量生成：
 ```python
         for iface in data.get("interfaces", []):
             pattern = iface.get("pattern")
@@ -344,7 +322,7 @@ Finally, we create the interfaces either directly or if we are using a pattern a
                 logger.error(f"Invalid interface definition in {model_name}: {iface}")
                 continue
 
-            # Generate interfaces from range patterns
+            # 从范围模式生成接口名称
             interface_names = expand_interface_pattern(pattern)
             for iface_name in interface_names:
                 interface_template, created = InterfaceTemplate.objects.get_or_create(
@@ -359,14 +337,11 @@ Finally, we create the interfaces either directly or if we are using a pattern a
                     logger.info(f"Added interface {iface_name} ({iface_type}) to {model_name}")
 ```
 
-Below is the finished product for the first two days. We are not ready the Site portion of the exercise.
+以下是前两天完成的最终代码，我们还没有开始站点部分的工作。
 
-## Final Code
-
+## 最终代码
 ```python
-
-
-"""Job to create a new site of type POP."""
+"""用于创建 POP 类型新站点的 Job。"""
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -380,7 +355,7 @@ from nautobot.tenancy.models import Tenant
 from nautobot.dcim.models.device_components import Interface
 from nautobot.extras.models.customfields import CustomField
 
-####DAY35####
+####第35天####
 from itertools import product
 import re
 import yaml
@@ -394,7 +369,7 @@ PREFIX_ROLES = ["p2p", "loopback", "server", "mgmt", "pop"]
 POP_PREFIX_SIZE = 16
 TENANT_NAME = "Data Center"
 ACTIVE_STATUS = Status.objects.get(name="Active")
-# VLAN definitions: key is also used to look up the role.
+# VLAN 定义：键名同时用于查找对应角色
 VLAN_INFO = {
     "server": 1000,
     "mgmt": 99,
@@ -402,11 +377,11 @@ VLAN_INFO = {
 CUSTOM_FIELDS = {
     "role": {"models": [Interface], "label": "Role"},
 }
-# Retrieve the content type for Prefix and VLAN models.
+# 获取 Prefix 和 VLAN 模型的内容类型
 prefix_ct = ContentType.objects.get_for_model(Prefix)
 vlan_ct = ContentType.objects.get_for_model(VLAN)
 
-####DAY35####
+####第35天####
 DEVICE_TYPES_YAML = [
     """
     manufacturer: Arista
@@ -440,29 +415,28 @@ DEVICE_TYPES_YAML = [
 
 
 def create_prefix_roles(logger):
-    """Create all Prefix Roles defined in PREFIX_ROLES and add content types for IPAM Prefix and VLAN."""    
+    """创建 PREFIX_ROLES 中定义的所有前缀角色，并为其添加 IPAM Prefix 和 VLAN 的内容类型。"""    
 
     for role in PREFIX_ROLES:
         role_obj, created = Role.objects.get_or_create(name=role)
-        # Add the Prefix and VLAN content types to the role.
+        # 为角色添加 Prefix 和 VLAN 内容类型
         role_obj.content_types.add(prefix_ct, vlan_ct)
         role_obj.validated_save()
         logger.info(f"Successfully created role {role} with content types for Prefix and VLAN.")
 
 
 def create_tenant(logger):
-    """Create a tenant with the name defined in TENANT_NAME."""
+    """使用 TENANT_NAME 定义的名称创建租户。"""
     tenant_obj, _ = Tenant.objects.get_or_create(name=TENANT_NAME)
     tenant_obj.validated_save()
     logger.info(f"Successfully created Tenant {TENANT_NAME}.")
 
 
 def create_vlans(logger):
-    """Create predefined VLANs defined in VLAN_INFO, and assign the appropriate role."""
-    # Get the active status from the database.
+    """创建 VLAN_INFO 中定义的预设 VLAN，并分配相应角色。"""
 
     for vlan_name, vlan_id in VLAN_INFO.items():
-        # Retrieve the appropriate role based on the VLAN name.
+        # 根据 VLAN 名称获取对应角色
         try:
             role_obj = Role.objects.get(name=vlan_name)
         except Role.DoesNotExist:
@@ -484,7 +458,7 @@ def create_vlans(logger):
             logger.info(f"VLAN '{vlan_name}' with ID {vlan_id} already exists.")
 
 def create_custom_fields(logger):
-    """Create all relationships defined in CUSTOM_FIELDS."""
+    """创建 CUSTOM_FIELDS 中定义的所有关联关系。"""
     for cf_name, field in CUSTOM_FIELDS.items():
         try:
             cf = CustomField.objects.get(key=cf_name)
@@ -500,10 +474,10 @@ def create_custom_fields(logger):
             cf.validated_save()
             logger.info(f"Added content type {ct} to custom field '{cf_name}'")
 
-####DAY35####
+####第35天####
 def create_device_types(logger):
     """
-    Create DeviceType objects from YAML definitions and add interfaces using InterfaceTemplate.
+    从 YAML 定义创建 DeviceType 对象，并使用 InterfaceTemplate 添加接口。
     """
 
     for device_yaml in DEVICE_TYPES_YAML:
@@ -520,7 +494,7 @@ def create_device_types(logger):
             logger.error("Model not provided in YAML for manufacturer %s", manufacturer_name)
             continue
 
-        # Create DeviceType
+        # 创建 DeviceType
         device_type_defaults = {
             k: data[k] for k in ["part_number", "u_height", "is_full_depth", "comments"] if k in data
         }
@@ -536,7 +510,7 @@ def create_device_types(logger):
         else:
             logger.info(f"DeviceType already exists: {device_type_obj}")
 
-        # Add interfaces using InterfaceTemplate
+        # 使用 InterfaceTemplate 添加接口
         for iface in data.get("interfaces", []):
             pattern = iface.get("pattern")
             iface_type = iface.get("type")
@@ -546,7 +520,7 @@ def create_device_types(logger):
                 logger.error(f"Invalid interface definition in {model_name}: {iface}")
                 continue
 
-            # Generate interfaces from range patterns
+            # 从范围模式生成接口名称
             interface_names = expand_interface_pattern(pattern)
             for iface_name in interface_names:
                 interface_template, created = InterfaceTemplate.objects.get_or_create(
@@ -562,33 +536,33 @@ def create_device_types(logger):
 
 def expand_interface_pattern(pattern):
     """
-    Expands an interface pattern like 'Ethernet[1-60]/[1-4]' into actual names.
+    将接口模式（如 'Ethernet[1-60]/[1-4]'）展开为实际接口名称列表。
     
-    Supports:
-      - Single range: Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
-      - Nested range: Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
+    支持以下格式：
+      - 单一范围：Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
+      - 嵌套范围：Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
     """
     match = re.findall(r"\[([0-9]+)-([0-9]+)\]", pattern)
     if not match:
-        return [pattern]  # No expansion needed, return as-is.
+        return [pattern]  # 无需展开，直接返回
 
-    # Convert to lists of numbers
+    # 转换为数字列表
     try:
         ranges = [list(range(int(start), int(end) + 1)) for start, end in match]
     except ValueError:
         raise ValueError(f"Invalid range in pattern: {pattern}")
 
-    # Generate base name with placeholders
+    # 生成含占位符的基础名称
     base_name = re.sub(r"\[[0-9]+-[0-9]+\]", "{}", pattern, count=len(ranges))
 
-    # Expand using cartesian product
+    # 使用笛卡尔积展开
     return [base_name.format(*nums) for nums in product(*ranges)]
 
 class CreatePop(Job):
-    """Job to create a new site of type POP."""
+    """用于创建 POP 类型新站点的 Job。"""
 
     class Meta:
-        """Metadata for CreatePop."""
+        """CreatePop 的元数据。"""
 
         name = "Create a Point of Presence"
         description = """
@@ -597,40 +571,34 @@ class CreatePop(Job):
         """
 
     def run(self):
-        """Main function to create a site."""
+        """创建站点的主函数。"""
         # ----------------------------------------------------------------------------
-        # Initialize the database with all required objects.
-        # We will build on this in the coming days.
+        # 使用所有必需对象初始化数据库。
+        # 我们将在接下来的几天中逐步扩展。
         # ----------------------------------------------------------------------------
         create_prefix_roles(self.logger)
         create_tenant(self.logger)
         create_vlans(self.logger)
         create_custom_fields(self.logger)
-        ####DAY35####
+        ####第35天####
         create_device_types(self.logger)
 
 
 register_jobs(CreatePop)
-
-
 ```
 
-Here is the Job output from the newly updated code: 
+以下是更新后代码的 Job 执行结果：
 
 ![day_35_job_result](images/day_35_job_result.png)
 
+## 第 35 天待办事项
 
-## Day 35 To Do
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/).
+欢迎在社交媒体上发布 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-Go ahead and post a screenshot of the successful execution of the job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress!
-
-In tomorrow's challenge, we will enhance our Site creation Job by adding Site and Prefix creation. See you tomorrow!
+在明天的挑战中，我们将通过添加站点和前缀创建功能来进一步增强站点创建 Job。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+35+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 35 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
-
-
-
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 35 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
