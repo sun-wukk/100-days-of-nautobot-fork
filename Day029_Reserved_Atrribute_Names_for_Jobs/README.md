@@ -1,25 +1,24 @@
-# Reserved Attribute Names in Jobs
+# Jobs 中的保留属性名称
 
-When recalling the experience of learning different programming languages, I remember [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) being pretty difficult and boring while liking [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) very much. Many people shared similar experiences when it comes to the two languages. 
+回想学习各种编程语言的经历，我记得 [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) 既难学又枯燥，而 [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) 则让我爱不释手。在这两种语言上，许多人都有相似的感受。
 
-While there might be different reasons, I know for me, what made Python different from other languages is the ability to "do stuff" much quicker. The `hello world` experience was one or two lines of code, and getting to do useful things like getting `show version` output from switches was not far beyond that, thanks to the vast number of existing libraries. 
+原因或许各有不同，但对我而言，Python 区别于其他语言的关键在于它能让你更快地"做成事情"。"Hello World"只需要一两行代码，而借助海量的现有库，从交换机获取 `show version` 输出也不过是更进一步的事。
 
-However, at some point, I had to come back to learn more about the "boring stuff" in order to progress further. Topics such as object-oriented programming, dynamic type-checking, garbage collection, and other topics are not exactly fun, but by then I was already hooked. Learning the boring topics was not so bad when I already realized the power the tool can give me.
+然而，到了某个阶段，我不得不回过头来学习更多"枯燥的东西"才能继续进步。面向对象编程、动态类型检查、垃圾回收等话题并不让人兴奋，但彼时我已深深着迷。当你已经领略到这门工具的强大之处，再学这些枯燥的话题也就不那么难熬了。
 
-Hopefully we have done enough to give you a taste of the power and fun aspect of Nautobot Jobs in the last 28 days of challenges. Today's challenge will be a little dull but necessary. 
+希望在过去 28 天的挑战中，我们已经让您充分体验到了 Nautobot Jobs 的魅力与乐趣。今天的挑战会略显枯燥，但却是必要的。
 
-We will begin by learning more about the [Reserved Attribute Names](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#reserved-attribute-names) in Nautobot Job class. 
+我们将从学习 Nautobot Job 类中的[保留属性名称](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#reserved-attribute-names)开始。
 
+## 环境配置
 
-## Environment Setup
+今天的挑战无需启动 Codespace 实验室，除非您想边实操边对照阅读。如有需要，请参阅 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 启动实验环境。
 
-For today's challenge we do not need the Codepsace lab unless you want to launch it and compare it with the reading. If that is the case, feel free to consult [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) to launch the lab. 
+## 保留属性名称
 
-## Reserved Attribute Names
+Job 类有许多属性和方法被用作保留名称，这与 [Python 关键字](https://realpython.com/python-keywords/) 的概念类似——不应将其用作自定义名称。试想一下，如果将 `for` 或 `def` 用作变量名或函数名，会造成多大的混乱。
 
-There are many attributes and methods of the Job class that serve as reserved names. This is similar to the [Python keywords](https://realpython.com/python-keywords/) that we should not use. For example, imagine how confusing it would be if you use `for` or `def` as variable or function names. 
-
-There are [special method names](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#special-methods) that we should not use: 
+以下是不应使用的[特殊方法名称](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#special-methods)：
 
 - `before_start()`
 - `run()`
@@ -27,7 +26,7 @@ There are [special method names](https://docs.nautobot.com/projects/core/en/stab
 - `on_failure()`
 - `after_return()`
 
-There are other [metadata attributes](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#special-methods) that we should be aware of: 
+以下是需要了解的[元数据属性](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#special-methods)：
 
 - name
 - description
@@ -43,18 +42,18 @@ There are other [metadata attributes](https://docs.nautobot.com/projects/core/en
 - template_name
 - time_limit
 
-As time goes on, there might be subtraction or additions to the list. There is no need to memorize them, rather just a good idea to be aware of them and bookmark the page as a reference. 
+随着版本更新，该列表可能会有所增减。无需死记硬背，只需了解它们的存在，并将相关页面收藏为参考资料即可。
 
-Today is a pretty short challenge, please use the rest of the time to glance through [Jobs Developer Guide](https://docs.nautobot.com/projects/core/en/stable/development/jobs/) if you have not done so already. 
+今天的挑战较为简短，请利用剩余时间浏览 [Jobs 开发者指南](https://docs.nautobot.com/projects/core/en/stable/development/jobs/)（如果您还没有读过的话）。
 
-## Day 29 To Do
+## 第 29 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Please post something you learned from reading the [Jobs Developer Guide](https://docs.nautobot.com/projects/core/en/stable/development/jobs/) on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+欢迎在社交媒体上分享您从阅读 [Jobs 开发者指南](https://docs.nautobot.com/projects/core/en/stable/development/jobs/) 中学到的内容，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will learn about using Nautobot Secret Groups for Nautobot Jobs. See you tomorrow! 
+在明天的挑战中，我们将学习如何在 Nautobot Jobs 中使用 Nautobot Secret Groups。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+29+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 29 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 29 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
