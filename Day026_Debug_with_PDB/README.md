@@ -1,26 +1,24 @@
-# Debug Jobs with PDB
+# 使用 PDB 调试 Jobs
 
-`pdb` is the Python Debugger, a built-in module for debugging Python programs. It allows us to set breakpoints, step through code, inspect variables, and evaluate expressions interactively. 
+`pdb` 是 Python 调试器，一个用于调试 Python 程序的内置模块。它允许我们设置断点、单步执行代码、检查变量，并以交互方式求值表达式。
 
-In today's challenge, we will see how we can use `pdb` to debug Nautobot Jobs. 
+在今天的挑战中，我们将了解如何使用 `pdb` 来调试 Nautobot Jobs。
 
-## Environment Setup
+## 环境配置
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
 > [!TIP]
-> We keep lab notes in the [Lab Related Notes](../Lab_Setup/lab_related_notes/README.md) for helpful tips in the various lab scenario. 
+> 我们在 [Lab Related Notes](../Lab_Setup/lab_related_notes/README.md) 中保存了各实验场景的实用技巧，可供参考。
 
-If you stopped the Codespace environment, simply restart it and use the following steps, you do not need to rebuild docker instances, nor import the database again: 
-
+如果已停止 Codespace 环境，只需重新启动并按以下步骤操作，无需重建 Docker 实例或重新导入数据库：
 ```bash
 $ cd nautobot-docker-compose/
 $ poetry shell
 $ invoke debug
 ```
 
-If you need to completely rebuild the environment in Codespace, here are the steps: 
-
+如果需要在 Codespace 中完全重建环境，请执行以下步骤：
 ```bash
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -29,28 +27,25 @@ $ invoke db-import
 $ invoke debug
 ```
 
-We do not need to use Containerlab for today's challenge. 
+今天的挑战无需使用 Containerlab。
 
-## Python PDB Example 
+## Python PDB 示例
 
-Before we use `pdb` for Nautobot Jobs, let's see a simple Python example with `pdb`. 
+在将 `pdb` 用于 Nautobot Jobs 之前，先通过一个简单的 Python 示例了解 `pdb` 的基本用法。
 
-We will drop into the Nautobot container shell for our challenge: 
-
+进入 Nautobot 容器 Shell：
 ```bash
 @ericchou1 ➜ ~ $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@ee2753f052ae:/opt/nautobot# 
 ```
 
-Let's create a simple Python file, I am installing and using `vim` directly in the container, but you can use any of the file creation and edit methods: 
-
+创建一个简单的 Python 文件，这里我在容器中安装并使用了 `vim`，您也可以使用任何顺手的文件创建和编辑方式：
 ```bash
 root@ee2753f052ae:/opt/nautobot# apt update
 root@ee2753f052ae:/opt/nautobot# apt install vim
 ```
 
-Here is the content of the file `pdb_example.py` and the execution of result: 
-
+以下是 `pdb_example.py` 的内容及执行结果：
 ```bash
 root@ee2753f052ae:/opt/nautobot# cat pdb_example.py 
 
@@ -66,8 +61,7 @@ root@ee2753f052ae:/opt/nautobot# python pdb_example.py
 3
 ```
 
-We will go ahead and `import pdb` at the top, and insert a breakpoint via `pdb.set_trace()` right before we print the result of `z`: 
-
+在文件开头添加 `import pdb`，并在打印 `z` 的结果之前通过 `pdb.set_trace()` 插入断点：
 ```bash
 root@ee2753f052ae:/opt/nautobot# cat pdb_example.py 
 import pdb
@@ -76,14 +70,13 @@ def my_function():
     x = 1
     y = 2
     z = x + y
-    pdb.set_trace()  # Execution will pause here
+    pdb.set_trace()  # 执行将在此处暂停
     print(z)
 
 my_function()
 ```
 
-This time, when we execute the file, we will be dropped into a `(Pdb)` shell. This time, we will type `print(x)` to print the value of x, `print(y)` to print the value of y, and press the letter `n` for `next` to continue. This is what is shown on the screen: 
-
+这次执行文件时，程序将进入 `(Pdb)` Shell。我们输入 `print(x)` 打印 x 的值，输入 `print(y)` 打印 y 的值，然后按 `n` 键（next）继续执行。屏幕上显示如下：
 ```bash
 root@ee2753f052ae:/opt/nautobot# python pdb_example.py 
 > /opt/nautobot/pdb_example.py(8)my_function()
@@ -100,27 +93,25 @@ root@ee2753f052ae:/opt/nautobot# python pdb_example.py
 (Pdb) exit()
 ```
 
-For reference, here are the commands in PDB to control the flow of the program: 
+以下是 PDB 中用于控制程序流程的常用命令：
 
-- n (next): Continue execution until the next line in the current function is reached.
-- s (step): Execute the current line and stop at the first possible occasion.
-- c (continue): Continue execution until a breakpoint is encountered.
-- l (list): Display the source code around the current line.
-- p (print): Evaluate and print the expression.
-- q (quit): Quit the debugger and abort the program.
+- n（next）：继续执行，直到当前函数的下一行。
+- s（step）：执行当前行，并在第一个可能的时机停止。
+- c（continue）：继续执行，直到遇到断点。
+- l（list）：显示当前行附近的源代码。
+- p（print）：求值并打印表达式。
+- q（quit）：退出调试器并终止程序。
 
-We can delete this test program: 
-
+删除测试文件：
 ```bash
 root@ee2753f052ae:/opt/nautobot# rm pdb_example.py 
 ```
 
-Let's look at an example of using PDB with `Nautobot Jobs`. 
+接下来看一个在 `Nautobot Jobs` 中使用 PDB 的示例。
 
-## Debug Jobs with PDB Example
+## 使用 PDB 调试 Jobs 示例
 
-Assume we have the following Job file: 
-
+假设我们有如下 Job 文件：
 ```bash
 from nautobot.apps.jobs import Job, register_jobs, ObjectVar, StringVar, IntegerVar, FileVar
 
@@ -145,16 +136,14 @@ register_jobs(
 )
 ```
 
-We can execute the Job via CLI: 
-
+可以通过 CLI 执行该 Job：
 ```bash
 root@ee2753f052ae:/opt/nautobot# nautobot-server runjob hello_job.HelloWorldwithLogs -u admin
 
 [02:19:12] Running hello_job.HelloWorldwithLogs...
 ```
 
-Let's create some variables and insert a breakpoint under `run()`: 
-
+在 `run()` 方法下创建一些变量并插入断点：
 ```bash
 from nautobot.apps.jobs import Job, register_jobs, ObjectVar, StringVar, IntegerVar, FileVar
 import pdb 
@@ -183,8 +172,7 @@ register_jobs(
 )
 ```
 
-We will need to execute the job with the `--local` flag: 
-
+执行 Job 时需要添加 `--local` 标志：
 ```bash
 root@ee2753f052ae:/opt/nautobot# nautobot-server runjob hello_job.HelloWorldwithLogs -u admin --local
 [02:23:06] Running hello_job.HelloWorldwithLogs...
@@ -192,12 +180,11 @@ root@ee2753f052ae:/opt/nautobot# nautobot-server runjob hello_job.HelloWorldwith
   Running job hello_job.HelloWorldwithLogs
 ```
 
-If we hop to the "Job Result" page of this job, we can see it is in a "pending" status and the output shows we are in `(Pdb)`: 
+切换到该 Job 的"Job Result"页面，可以看到 Job 处于"pending"（等待中）状态，输出显示我们正处于 `(Pdb)` 环境中：
 
 ![job_pdb_1](images/job_pdb_1.png)
 
-We can proceed with what we would do to troubleshoot the environment: 
-
+接下来按照排查问题的思路进行操作：
 ```bash
 print(x)
 print(y)
@@ -205,20 +192,20 @@ print(name)
 exit()
 ```
 
-The results will show up in the logs of "Job Results": 
+执行结果将显示在"Job Results"的日志中：
 
 ![job_pdb_2](images/job_pdb_2.png)
 
-PDB might seem strange at first and feels as if it is a lot of work for little gain. But it is one of the best tried and true troubleshooting tools we can use when we need to debug our Job in its context. 
+PDB 初看起来可能有些陌生，感觉投入多收获少。但当我们需要在 Job 的执行上下文中进行调试时，它是最经得起时间检验的利器之一。
 
-## Day 26 To Do
+## 第 26 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Go ahead and post a screenshot of the successful execution of the `PDB` result on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+欢迎在社交媒体上发布 `PDB` 成功执行结果的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will learn more about URL dispatch. See you tomorrow! 
+在明天的挑战中，我们将深入了解 URL 分发机制。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+26+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 26 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 26 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
