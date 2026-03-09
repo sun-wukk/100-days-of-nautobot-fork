@@ -1,18 +1,15 @@
-# Examples Illustrating Job Scheduling
+# Job 调度示例
 
-Job Scheduling allows us to periodically execute our Jobs. This is similar to a `cron` job. 
+Job 调度允许我们定期执行 Job，其功能类似于 `cron` 定时任务。让我们在今天的挑战中创建一个示例。
 
-Let's create an example in today's challenge. 
+## 环境配置
 
-## Environment Setup
-
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
 > [!TIP]
-> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. 
+> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。
 
-We will follow the same steps to start Nautobot: 
-
+按照以下步骤启动 Nautobot：
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -21,21 +18,19 @@ $ invoke db-import
 $ invoke debug
 ```
 
-For today's challenge, we do not need to use Arista vEOS image nor Containerlab. 
+今天的挑战无需使用 Arista vEOS 镜像和 Containerlab。
 
-The environment is now setup for today's challenge.  
+今天挑战的环境已配置完毕。
 
-## Create a Job File
+## 创建 Job 文件
 
-If you have other job files from other days, please feel free to use them. Here is the `hello_jobs.py` file we created early in our journey: 
+如果您保留了其他天的 Job 文件，可以直接使用。以下是我们在学习初期创建的 `hello_jobs.py` 文件：
 
 ![file_creation](images/file_creation.png)
-
 ```
 from nautobot.apps.jobs import Job, register_jobs
 
 class HelloJobs(Job):
-
     def run(self):
         self.logger.debug("Hello, this is my first Nautobot Job.")
 
@@ -44,41 +39,39 @@ register_jobs(
 )
 ```
 
-If this is a new job, we will need to do a `post-upgrade`:
-
+如果这是一个新 Job，需要执行 `post-upgrade`：
 ```
 $ invoke post-upgrade
 ```
 
-This job would need to be enabled if not already. 
+如果该 Job 尚未启用，还需要先将其启用。
 
-For jobs to be able to scheduled, it cannot have sensitive information. On the job detail page (by clicking on the edit button), we will need to override the default for "Has sensitive variables": 
+要使 Job 支持调度，不能包含敏感信息。在 Job 详情页（点击编辑按钮进入），需要覆盖 "Has sensitive variables" 的默认设置：
 
 ![job_scheduling_1](images/job_schedule_1.png)
 
-Once that is changed, on the Job run menu, we will have the selection to schedule the job: 
+修改完成后，在 Job 运行菜单中将出现调度选项：
 
 ![job_scheduling_2](images/job_schedule_2.png)
 
-We can choose to run 'Once in the future' and pick a date and time: 
+可以选择"在未来某一时间运行一次"，并指定日期和时间：
 
 ![job_scheduling_3](images/job_schedule_3.png)
 
-Once the job is scheduled, it can be viewed under 'Jobs -> Scheduled Jobs": 
+Job 调度完成后，可以在 "Jobs -> Scheduled Jobs" 下查看：
 
 ![job_scheduling_4](images/job_schedule_4.png)
 
-Job scheduling is a simple but powerful feature, if you have some time, experiment with the existing 'System Jobs' for 'Logs Cleanup' or take a look at the [Nautobot Golden Config App](https://docs.nautobot.com/projects/golden-config/en/latest/), where job schedule is used for configuration back. 
+Job 调度是一个简单而强大的功能。如果您有时间，可以尝试使用现有的 "System Jobs" 中的 "Logs Cleanup"，或者了解 [Nautobot Golden Config App](https://docs.nautobot.com/projects/golden-config/en/latest/)，该应用使用 Job 调度来实现配置备份。
 
-## Day 16 To Do
+## 第 16 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Go ahead and post a screenshot of the successful scheduling of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+欢迎在社交媒体上发布新 Job 成功调度的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will take a look at Job Approval. See you tomorrow! 
+在明天的挑战中，我们将了解 Job 审批机制。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+16+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 16 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
-
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 16 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
