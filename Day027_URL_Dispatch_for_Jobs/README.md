@@ -1,22 +1,23 @@
-# URL Dispatch and Views in Nautobot
-Every web application requires a mechanism to route incoming HTTP requests to the appropriate segment of code. In Nautobot, this capability is implemented via Django’s robust URL routing system. When a request arrives, Django consults its URL configuration—typically defined in one or more urls.py files—to determine the appropriate view for processing the request. This clear separation between URL definitions and business logic is a fundamental principle of the URL dispatch design pattern, contributing to a highly maintainable codebase.
+# Nautobot 中的 URL 分发与视图
 
-In Nautobot, URL dispatching extends beyond serving static pages or handling API endpoints. It plays a crucial role in the platform’s extensibility, especially within its dynamic plugin ecosystem. Developers can define custom URL patterns that map directly to views, enabling the creation of new pages that interact seamlessly with Nautobot’s models, jobs, and other core components.
+每个 Web 应用程序都需要一种机制来将传入的 HTTP 请求路由到相应的代码段。在 Nautobot 中，这一功能通过 Django 强大的 URL 路由系统实现。当请求到达时，Django 会查阅其 URL 配置（通常定义在一个或多个 urls.py 文件中）来确定处理该请求的合适视图。URL 定义与业务逻辑之间的清晰分离是 URL 分发设计模式的基本原则，有助于构建高度可维护的代码库。
 
-As you might recall from Day 23, we previously modified the Nautobot core to add an additional tab that displayed a table of results. Today, we will create our own Nautobot application to override core views for displaying job outcomes. While this approach achieves a similar objective to our earlier work, it introduces a flexible method applicable to various enhancements. For instance, you could use this technique to integrate Grafana graphs within a specific device’s tab, among other possibilities.
+在 Nautobot 中，URL 分发不仅限于提供静态页面或处理 API 端点，它在平台的可扩展性方面也发挥着至关重要的作用，尤其是在其动态插件生态系统中。开发者可以定义直接映射到视图的自定义 URL 模式，从而创建能够与 Nautobot 的模型、Job 及其他核心组件无缝交互的新页面。
 
-## Environment Setup
+您可能还记得第 23 天，我们直接修改了 Nautobot 核心，添加了一个用于显示结果表格的附加选项卡。今天，我们将创建自己的 Nautobot 应用来覆盖用于显示 Job 输出的核心视图。虽然这种方式与之前的实现目标相似，但它引入了一种灵活的方法，可应用于各种功能增强场景。例如，您可以利用这一技术在特定设备的选项卡中集成 Grafana 图表等。
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+## 环境配置
+
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
 > [!TIP]
-> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. 
+> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。
 
->[!TIP]
-> Make sure to remove the mapping of templates created on Day 23 from the ```nautobot-docker-compose/environments/docker-compose.local.yml``` file. You want to make sure you have the vanilla Nautobot files before proceeding.
+> [!TIP]
+> 请确保从 ```nautobot-docker-compose/environments/docker-compose.local.yml``` 文件中移除第 23 天创建的模板映射，确保使用原始的 Nautobot 文件后再继续操作。
 
-Once again, we will add a volume to our `nautobot-docker-compose/environments/docker-compose.local.yml` for this walkthrough. We will use the plugin example, which should already be in your `nautobot-docker-compose` folder under `plugins`.
-```yaml
+同样，我们将在 `nautobot-docker-compose/environments/docker-compose.local.yml` 中添加一个卷挂载。我们将使用插件示例，它应该已经位于您的 `nautobot-docker-compose` 目录下的 `plugins` 文件夹中。
+`````yaml
 ---
 services:
   nautobot:
@@ -38,33 +39,33 @@ services:
       - "../config/nautobot_config.py:/opt/nautobot/nautobot_config.py"
       - "../jobs:/opt/nautobot/jobs"
       - "../plugins/plugin_example/nautobot_example_plugin:/usr/local/lib/python3.8/site-packages/nautobot_example_plugin"
-```
+`````
 
-### Starting Nautobot
-```sh
+### 启动 Nautobot
+`````sh
 $ cd nautobot-docker-compose/
 $ poetry shell
 $ invoke build
 $ invoke debug
-```
+`````
 
-## The Role of URLs and Views
+## URL 与视图的作用
+
 ### `urls.py`
-To better understand how Nautobot handles routing, open the Nautobot shell from your container and import the Nautobot core URLs. This process reveals the location of one of Nautobot’s `urls.py` files, allowing you to inspect its contents:
 
-```sh
+为了更好地理解 Nautobot 如何处理路由，从容器中打开 Nautobot Shell 并导入 Nautobot 核心 URL。这一过程会显示 Nautobot 某个 `urls.py` 文件的位置，从而可以查看其内容：
+`````sh
 root@eba3a1d8b6ab:/opt/nautobot# nautobot-server nbshell
 >>> import nautobot.core.urls
 >>> print(nautobot.core.urls.__file__)
 /usr/local/lib/python3.8/site-packages/nautobot/core/urls.py
 >>> exit()
-```
+`````
 
-This file corresponds to the one found in the [Nautobot GitHub repository](https://github.com/nautobot/nautobot/blob/develop/nautobot/core/urls.py).
+该文件对应 [Nautobot GitHub 仓库](https://github.com/nautobot/nautobot/blob/develop/nautobot/core/urls.py) 中的同名文件。
 
-Now, let’s focus on a specific section of this `urls.py` file:
-
-```python
+现在聚焦于 `urls.py` 文件的特定部分：
+`````python
 urlpatterns = [
     path("circuits/", include("nautobot.circuits.urls")),
     path("cloud/", include("nautobot.cloud.urls")),
@@ -73,14 +74,14 @@ urlpatterns = [
     path("ipam/", include("nautobot.ipam.urls")),
     path("tenancy/", include("nautobot.tenancy.urls")),
 ]
-```
+`````
 
-These URL patterns direct you to the appropriate views rendered on your screen when you click through links in the Nautobot application. Each path corresponds to a set of models, views, and APIs, effectively functioning as an individual Nautobot app.
+这些 URL 模式将请求引导至您在 Nautobot 应用中点击链接时屏幕上渲染的相应视图。每个路径对应一组模型、视图和 API，实际上各自构成一个独立的 Nautobot 应用。
 
-### VIEWS.PY
-While URL patterns determine where a request should go, views are responsible for processing those requests and generating the appropriate response. In Django—and by extension, Nautobot—views encapsulate the business logic that interacts with models, performs data processing, and renders templates or returns API responses.
+### views.py
 
-```python
+URL 模式决定请求的去向，而视图负责处理请求并生成相应的响应。在 Django（以及 Nautobot）中，视图封装了与模型交互、执行数据处理以及渲染模板或返回 API 响应的业务逻辑。
+`````python
 class JobResultView(generic.ObjectView):
     """
     Display a JobResult and its Job data.
@@ -101,38 +102,37 @@ class JobResultView(generic.ObjectView):
             "result": instance,
             **super().get_extra_context(request, instance),
         }
-```
+`````
 
-In this example:
+在此示例中：
 
-GET Requests: When a user navigates to the URL for a specific JobResult, the view retrieves the corresponding object from the database using the pre-configured queryset (which also pre-fetches related job model and user data). The view then renders the extras/jobresult.html template to display the JobResult details. During this process, the get_extra_context method is invoked to augment the template context. This method checks if the JobResult instance has an associated job model and, if so, extracts the corresponding job class. It then adds this information—along with an (as yet) unused associated record and the JobResult itself—to the context provided to the template.
+**GET 请求**：当用户访问某个 JobResult 的 URL 时，视图使用预配置的查询集（同时预取关联的 Job 模型和用户数据）从数据库中检索相应对象，然后渲染 extras/jobresult.html 模板以显示 JobResult 详情。在此过程中，`get_extra_context` 方法被调用以扩充模板上下文，该方法检查 JobResult 实例是否关联了 Job 模型，若有则提取对应的 Job 类，并将这些信息（连同尚未使用的关联记录和 JobResult 本身）添加到提供给模板的上下文中。
 
-POST Requests: This particular view is designed solely for displaying information and does not include any logic to handle POST requests. All interactions with this view are read-only, focusing on rendering detailed job result data rather than processing user input or form submissions.
+**POST 请求**：该视图仅用于展示信息，不包含任何处理 POST 请求的逻辑。与该视图的所有交互均为只读操作，专注于渲染详细的 Job 结果数据，而非处理用户输入或表单提交。
 
-Together, this design ensures that when a user accesses a JobResult page, they receive a comprehensive view enriched with relevant job data, all managed by a clean separation of URL routing and view logic.
+这种设计确保了当用户访问 JobResult 页面时，能够获得包含相关 Job 数据的完整视图，同时通过 URL 路由与视图逻辑的清晰分离来保证代码质量。
 
+## 自定义插件的构建模块
 
-## Building Blocks of a Custom Plugin
-Today, we’ll create a URL that maps to a view designed to interface with the VerifyHostname job. You could also create jobs that, for instance, run a routine check on network configurations or perform data aggregation. The view can be as simple as presenting a page with a button to trigger the job or as complex as handling form submissions and job status updates.
+今天，我们将创建一个映射到视图的 URL，该视图专门用于与 VerifyHostname Job 交互。您也可以创建用于执行定期网络配置检查或数据聚合的 Job，视图可以简单到只呈现一个带触发 Job 按钮的页面，也可以复杂到处理表单提交和 Job 状态更新。
 
 > [!TIP]
-> All the files below should be created under the `nautobot-docker-compose/plugins/plugin_example/nautobot_example_plugin` folder. This folder is mapped to both the Nautobot and Nautobot-worker containers and placed in the Python site-packages folder, similar to how PIP installs files. This setup allows us to boot the Nautobot containers as if we had installed this plugin using PIP.
+> 以下所有文件均应在 `nautobot-docker-compose/plugins/plugin_example/nautobot_example_plugin` 目录下创建。该目录同时映射到 Nautobot 和 Nautobot-worker 容器，并放置于 Python 的 site-packages 目录中，其方式与 PIP 安装文件类似。这样的配置使我们能够像通过 PIP 安装了该插件一样启动 Nautobot 容器。
 
-### Constructing the Custom Nautobot Plugin Application
+### 构建自定义 Nautobot 插件应用
 
-In the `plugins/plugin_example/nautobot_example_plugin` folder, we will create a set of files that serve as the building blocks of our plugin. These files include the plugin configuration, URL mappings, custom views, job definitions, and the templates used to render our pages. Below is a breakdown of these files and their roles:
+在 `plugins/plugin_example/nautobot_example_plugin` 目录下，我们将创建一组文件作为插件的构建模块，包括插件配置、URL 映射、自定义视图、Job 定义以及用于渲染页面的模板。以下是这些文件及其作用的详细说明：
+
 ![vscode_explorer](images/vscode_explorer.png)
 
 1. `__init__.py`
-This file initializes and registers your plugin with Nautobot by defining its configuration.
 
-- **Plugin Configuration**:
-The `ExampleConfig` class (subclassing `PluginConfig`) defines essential metadata such as the plugin’s name, version, author, base URL, and other settings. This information informs Nautobot about how to integrate your plugin into its system.
+该文件通过定义插件配置来初始化并向 Nautobot 注册插件。
 
-- **Registration**:
-By assigning `config = ExampleConfig`, Nautobot automatically detects and loads your plugin at startup.
+- **插件配置**：`ExampleConfig` 类（继承自 `PluginConfig`）定义了插件的名称、版本、作者、基础 URL 等核心元数据，告知 Nautobot 如何将插件集成到系统中。
 
-```python
+- **注册**：通过 `config = ExampleConfig` 赋值，Nautobot 会在启动时自动检测并加载您的插件。
+`````python
 from nautobot.extras.plugins import PluginConfig
 
 class ExampleConfig(PluginConfig):
@@ -149,80 +149,74 @@ class ExampleConfig(PluginConfig):
     caching_config = {}
 
 config = ExampleConfig  # pylint: disable=invalid-name
-```
+`````
 
 2. `urls.py`
-This file defines the URL mapping for your plugin.
 
-- **URL Mapping**:
-The file maps a specific URL pattern (`verifyhostname-results/<uuid:pk>/`) to a custom view (`CustomJobResultView`). When a user navigates to this URL, the request is directed to the view that will handle the display of the job result.
+该文件定义插件的 URL 映射。
 
-```python
+- **URL 映射**：将特定 URL 模式（`verifyhostname-results/<uuid:pk>/`）映射到自定义视图（`CustomJobResultView`）。当用户访问该 URL 时，请求将被定向到负责显示 Job 结果的视图。
+`````python
 from django.urls import path
 from nautobot_example_plugin.views import CustomJobResultView
 
 urlpatterns = [
     path("verifyhostname-results/<uuid:pk>/", CustomJobResultView.as_view(), name="custom_job_result"),
 ]
-```
+`````
 
 3. `views.py`
-This file customizes how data is presented to the user by extending Nautobot’s built-in view for job results.
 
-- **Custom Job Result View**:
-The `CustomJobResultView` class inherits from `JobResultView`, which already handles permissions and basic object rendering. It overrides the default template with a custom one (`customized_jobresult.html`) and extends the context data to include additional variables—such as the job results and a custom message.
+该文件通过扩展 Nautobot 内置的 Job 结果视图来自定义数据的呈现方式。
 
-- **View Override Registration**:
-The `override_views` dictionary directs Nautobot to use this custom view instead of the default one, ensuring your modifications are applied to the job result display.
+- **自定义 Job 结果视图**：`CustomJobResultView` 类继承自 `JobResultView`（已处理权限验证和基本对象渲染），将默认模板替换为自定义模板（`customized_jobresult.html`），并扩展上下文数据以包含额外变量（如 Job 结果和自定义消息）。
 
-```python
-from nautobot.extras.views import JobResultView  # Import the built-in view
+- **视图覆盖注册**：`override_views` 字典指示 Nautobot 使用此自定义视图替代默认视图，确保您的修改应用于 Job 结果展示页面。
+`````python
+from nautobot.extras.views import JobResultView  # 导入内置视图
 
 class CustomJobResultView(JobResultView):
     """
-    This view customizes Nautobot's built-in JobResultView.
-    Since JobResultView already implements ObjectPermissionRequiredMixin,
-    we don't need to include it again.
+    该视图自定义 Nautobot 内置的 JobResultView。
+    由于 JobResultView 已实现 ObjectPermissionRequiredMixin，
+    无需在此重复引入。
     """
     template_name = "nautobot_example_plugin/customized_jobresult.html"
 
     def get_context_data(self, **kwargs):
-        # Call the superclass implementation to get the default context.
+        # 调用父类实现以获取默认上下文
         context = super().get_context_data(**kwargs)
-        # The JobResult object is available in the context as 'object'.
+        # JobResult 对象在上下文中以 'object' 形式存在
         job_result = context.get("object")
         if job_result and job_result.result:
             context["results"] = job_result.result.get("results", [])
         else:
             context["results"] = []
-        # Add any additional context variables here.
+        # 在此添加其他上下文变量
         context["custom_message"] = "This is my custom job result view."
         return context
 
-# This dictionary tells Nautobot to use your custom view for job results.
+# 该字典告知 Nautobot 对 Job 结果使用自定义视图
 override_views = {
     "extras:jobresult": CustomJobResultView.as_view(),
 }
-```
+`````
 
-4. `jobs/__init__.py` and `jobs/verify_hostnames.py`
-These files define the custom job that your plugin will execute.
+4. `jobs/__init__.py` 和 `jobs/verify_hostnames.py`
 
-- **Package Initialization**:
-The `jobs/__init__.py` file marks the jobs directory as a package so that Nautobot can discover and import the job modules.
-```python
+这两个文件定义插件将执行的自定义 Job。
+
+- **包初始化**：`jobs/__init__.py` 将 jobs 目录标记为 Python 包，使 Nautobot 能够发现并导入 Job 模块。
+`````python
 from nautobot.core.celery import register_jobs
 from .verify_hostnames import VerifyHostnameJob
 
 jobs = [VerifyHostnameJob]
 register_jobs(*jobs)
-```
+`````
 
-- **Custom Job Implementation**:
-In `jobs/verify_hostnames.py`, the `VerifyHostnameJob` class defines a job that checks if device hostnames adhere to a specified pattern. It uses an `ObjectVar` to select a location that has devices, iterates over each device at that location, and logs whether each device’s hostname passes the regex pattern test. 
-Additionally, the job constructs a URL (using Django’s `reverse` function) that links to the detailed results view and returns a dictionary containing the job results and the URL. This data is then consumed by your custom view to render the detailed job result page.
-
-```python
+- **自定义 Job 实现**：在 `jobs/verify_hostnames.py` 中，`VerifyHostnameJob` 类定义了一个检查设备主机名是否符合指定模式的 Job。它使用 `ObjectVar` 选择包含设备的位置，遍历该位置的每台设备，并记录每台设备主机名是否通过正则模式匹配检查。此外，Job 还使用 Django 的 `reverse` 函数构建指向详细结果视图的 URL，并返回包含 Job 结果和该 URL 的字典，供自定义视图渲染详细结果页面使用。
+`````python
 from nautobot.apps.jobs import Job, ObjectVar
 from nautobot.dcim.models.locations import Location
 from nautobot.dcim.models.devices import Device
@@ -265,19 +259,17 @@ class VerifyHostnameJob(Job):
         self.logger.info(f'<a href="{link_url}" target="_blank">View Detailed Results</a>')
 
         return {"results": results, "redirect_url": link_url}
-```
+`````
 
-5. Template Files
-The templates render the HTML pages that display your plugin’s output.
+5. 模板文件
 
-- **`templates/nautobot_example_plugin/customized_jobresult.html`**:
-This template extends Nautobot’s generic object detail template and provides a custom layout for the job result page. It defines various blocks (breadcrumbs, buttons, content sections, tabs, and JavaScript) to structure the page. The template utilizes the context provided by `CustomJobResultView`, including the custom message and job results, to present a detailed view of the job execution.
+模板负责渲染显示插件输出的 HTML 页面。
 
-- **`templates/nautobot_example_plugin/inc/hostname_check_results.html`**:
-This partial template is included within the main job result template. It displays a table of hostname check results by iterating over the job’s result data. Additionally, it includes a button and accompanying JavaScript to export the results as a CSV file, allowing users to easily download and analyze the job output.
+- **`templates/nautobot_example_plugin/customized_jobresult.html`**：该模板继承自 Nautobot 的通用对象详情模板，为 Job 结果页面提供自定义布局，定义了多个块（面包屑导航、按钮、内容区域、选项卡和 JavaScript）来组织页面结构。模板使用 `CustomJobResultView` 提供的上下文（包括自定义消息和 Job 结果）来呈现 Job 执行的详细视图。
 
-```templates/nautobot_example_plugin/customized_jobresult.html```:
-```html
+- **`templates/nautobot_example_plugin/inc/hostname_check_results.html`**：该局部模板被包含在主 Job 结果模板中，通过遍历 Job 的结果数据显示主机名检查结果表格。此外，它还包含一个按钮和配套的 JavaScript 代码，用于将结果导出为 CSV 文件，方便用户下载和分析 Job 输出。
+`````templates/nautobot_example_plugin/customized_jobresult.html```:
+````html
 {% extends 'generic/object_detail.html' %}
 {% load helpers %}
 {% load custom_links %}
@@ -443,15 +435,14 @@ This partial template is included within the main job result template. It displa
     <script src="{% versioned_static 'js/tableconfig.js' %}"></script>
     <script src="{% versioned_static 'js/log_level_filtering.js' %}"></script>
 {% endblock %}
-```
-
-```templates/nautobot_example_plugin/inc/hostname_check_results.html```:
+````
+````templates/nautobot_example_plugin/inc/hostname_check_results.html```:
 ```html
 {% load custom_links %}
 
 {% if result.result.results %}
     <h1>Hostname Check Results Table</h1>
-    <!-- Added container with id "hostname-check" -->
+    <!-- 添加带 id "hostname-check" 的容器 -->
     <div id="hostname-check">
         <table class="table table-hover">
             <thead>
@@ -486,7 +477,7 @@ This partial template is included within the main job result template. It displa
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('export-results').addEventListener('click', function() {
-            // Now that the table is wrapped in #hostname-check, this selector works.
+            // 由于表格现在包含在 #hostname-check 中，此选择器可正常工作
             var table = document.querySelector('#hostname-check table');
             if (!table) {
                 console.error("Table not found!");
@@ -499,21 +490,21 @@ This partial template is included within the main job result template. It displa
                 var row = [], cols = rows[i].querySelectorAll('td, th');
                 
                 for (var j = 0; j < cols.length; j++) {
-                    // Clean up cell content for CSV
+                    // 清理单元格内容以适配 CSV 格式
                     var data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
-                    // Escape quotes
+                    // 转义引号
                     data = data.replace(/"/g, '""');
-                    // Add quotes if necessary
+                    // 必要时添加引号
                     if (data.search(/("|,|\n)/g) >= 0) data = '"' + data + '"';
                     row.push(data);
                 }
                 csv.push(row.join(','));
             }
             
-            // Download
+            // 下载文件
             var csvString = csv.join('\n');
             var a = document.createElement('a');
-            // Using the correct MIME type for CSV
+            // 使用正确的 CSV MIME 类型
             a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString);
             a.target = '_blank';
             a.download = 'hostname_check_results.csv';
@@ -525,9 +516,9 @@ This partial template is included within the main job result template. It displa
 </script>
 ```
 
-With all these elements in place, we should restart our containers so that Nautobot can register our new plugin.
+所有文件就绪后，需要重启容器以便 Nautobot 注册新插件。
 
-### Stop the Containers:
+### 停止容器
 ```bash
 nautobot-1       |   "GET /extras/jobs/ HTTP/1.1" 200 255502
 nautobot-1       | 02:56:33.623 INFO    django.server :
@@ -546,10 +537,11 @@ Gracefully stopping... (press Ctrl+C again to force)
 canceled
 ```
 
-### Update `config/nautobot_config.py`
-When adding a plugin, the plugin's name must be included in the `nautobot_config.py` file. This will register the plugin with Nautobot and allow it to function properly.
-![nautobot_config](images/nautobot_config.png)
+### 更新 `config/nautobot_config.py`
 
+添加插件时，插件名称必须写入 `nautobot_config.py` 文件，以便向 Nautobot 注册插件并确保其正常运行。
+
+![nautobot_config](images/nautobot_config.png)
 ```python
 """Nautobot development configuration file."""
 
@@ -572,10 +564,10 @@ LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
 # Redis Cacheops
 CACHEOPS_REDIS = parse_redis_connection(redis_database=1)
 
-# Enable installed plugins. Add the name of each plugin to the list.
+# 启用已安装的插件，将每个插件名称添加到列表中
 PLUGINS = ["nautobot_example_plugin"]
 
-# Plugins configuration settings.
+# 插件配置设置
 PLUGINS_CONFIG = {
     "nautobot_example_plugin": {},
 }
@@ -583,7 +575,7 @@ PLUGINS_CONFIG = {
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080", "https://localhost:8080"]
 ```
 
-### Rebuild the Container:
+### 重建容器
 ```bash
  ➜ ~/nautobot-docker-compose (main) $ invoke build
 Building Nautobot 2.3.2 with Python 3.8...
@@ -598,7 +590,7 @@ Running docker compose command "build"
 #2 [nautobot internal] load metadata for ghcr.io/nautobot/nautobot:2.3.2-py3.8
 ```
 
-### Start the Containers:
+### 启动容器
 ```bash
 $ invoke debug
 Starting Nautobot in debug mode...
@@ -610,8 +602,9 @@ Running docker compose command "up"
  Container nautobot_docker_compose-celery_worker-1  Created
 ```
 
-### Validate Plugin Installation
-Open a second terminal window in VSCode and validate that our files have been copied to the containers:
+### 验证插件安装
+
+在 VSCode 中打开第二个终端窗口，验证文件已成功复制到容器中：
 ```bash
 $ cd nautobot-docker-compose/
 $ invoke cli
@@ -621,63 +614,76 @@ nautobot@51c9bdd1c291:~$ ls /usr/local/lib/python3.8/site-packages/nautobot_exam
 __init__.py  jobs  templates  urls.py  views.py
 ```
 
-### Verify in Nautobot
-On the left-side navigation bar, go to the **Apps** section, expand it, and click on **Installed Apps**.
+### 在 Nautobot 中验证
+
+在左侧导航栏中找到 **Apps** 部分，展开后点击 **Installed Apps**。
+
 ![installed-apps](images/installed-apps.jpg)
 
-Click on **Sample Project for Example**. Here, we see details of the features we configured in this plugin, including:
-- A link to the job from our `jobs` folder.
-- The custom URL we created in `urls.py`.
-- The **Core View Overrides** configured in `views.py`, which override the core job result page with our customized HTML template.
+点击 **Sample Project for Example**，可以看到该插件配置的功能详情，包括：
+- 指向 `jobs` 目录中 Job 的链接。
+- 在 `urls.py` 中创建的自定义 URL。
+- 在 `views.py` 中配置的**核心视图覆盖（Core View Overrides）**，将核心 Job 结果页面替换为我们的自定义 HTML 模板。
+
 ![installed-app-details](images/installed-app-details.jpg)
 
-### Running the Job
-Click the link for **Verify Hostname Pattern For Selected Locations Plugin Job** to navigate to the new job added by this plugin. Select a site and run the job.
+### 运行 Job
+
+点击 **Verify Hostname Pattern For Selected Locations Plugin Job** 链接，导航到该插件新增的 Job 页面，选择站点并运行。
+
 ![new-job-run](images/new-job-run.jpg)
 
-### Reviewing the Job Result
-In the **Job Result** page, you will see:
-- A **Hostname Check** tab.
-- A **View Detailed Results** link in the log output.
+### 查看 Job 结果
 
-Clicking this link will direct you to the same job results page but with a customized URL. The **Hostname Check** tab will display the table output created on Day 23.
+在 **Job Result** 页面，您将看到：
+- 一个 **Hostname Check** 选项卡。
+- 日志输出中的 **View Detailed Results** 链接。
+
+点击该链接将跳转到同一 Job 结果页面，但使用的是自定义 URL。**Hostname Check** 选项卡将显示第 23 天创建的表格输出。
+
 ![hostname-check-tab](images/hostname-check-tab.jpg)
 
-### Job List Update
-In the **Jobs** list, you will notice:
-- A new **Job Group** called "Data Quality Custom Jobs Collection."
-- The registered job **Verify Hostname Pattern For Selected Locations Plugin Job**.
+### Jobs 列表更新
 
-This information is defined in the `VerifyHostnameJob` class:
+在 **Jobs** 列表中，您将注意到：
+- 新增了一个名为"Data Quality Custom Jobs Collection"的 **Job Group**。
+- 已注册的 Job **Verify Hostname Pattern For Selected Locations Plugin Job**。
+
+这些信息定义在 `VerifyHostnameJob` 类中：
 ```python
 name = "Data Quality Custom Jobs Collection"
 ```
-and the `Meta` class:
+
+以及 `Meta` 类中：
 ```python
 class Meta:
     name = "Verify Hostname Pattern For Selected Locations Plugin Job"
     description = "Checks all devices at the designated location for hostname pattern conformity"
 ```
+
 ![job-list](images/job-list.jpg)
 
-## Summary
-This custom plugin is constructed using the following components:
+## 总结
 
-- **Configuration (`__init__.py`)**: Registers the plugin with Nautobot and sets essential metadata.
-- **URL Mapping (`urls.py`)**: Defines the routing from a custom URL to the plugin’s view.
-- **Custom Views (`views.py`)**: Extends Nautobot’s built-in views to customize job result displays.
-- **Job Definition (`jobs/verify_hostnames.py`)**: Implements hostname verification logic and logs the results.
-- **Templates (`customized_jobresult.html` and `hostname_check_results.html`)**: Render the UI for displaying job results, including a table and CSV export functionality.
+该自定义插件由以下组件构成：
 
-This modular structure ensures seamless integration with Nautobot while maintaining clarity and extensibility.
+- **配置（`__init__.py`）**：向 Nautobot 注册插件并设置核心元数据。
+- **URL 映射（`urls.py`）**：定义从自定义 URL 到插件视图的路由。
+- **自定义视图（`views.py`）**：扩展 Nautobot 内置视图以自定义 Job 结果展示。
+- **Job 定义（`jobs/verify_hostnames.py`）**：实现主机名验证逻辑并记录结果。
+- **模板（`customized_jobresult.html` 和 `hostname_check_results.html`）**：渲染 Job 结果展示的 UI，包括结果表格和 CSV 导出功能。
 
-## Day 27 To-Do
-Remember to stop the Codespace instance at [GitHub Codespaces](https://github.com/codespaces/). 
+这种模块化结构确保了与 Nautobot 的无缝集成，同时保持了代码的清晰性和可扩展性。
 
-Post a screenshot of the successful execution of the new job on social media using `#100DaysOfNautobot` and `#JobsToBeDone`, and tag `@networktocode`. 
+## 第 27 天待办事项
 
-In tomorrow's challenge, we will explore nautobot job log retention. See you tomorrow! 
+记得在 [GitHub Codespaces](https://github.com/codespaces/) 停止 Codespace 实例。
+
+欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+
+在明天的挑战中，我们将探讨 Nautobot Job 日志保留机制。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+27+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 27 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 27 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+````
