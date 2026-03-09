@@ -1,24 +1,24 @@
-# Baking a Nautobot App Cookie
+# 使用 Cookiecutter 创建 Nautobot App
 
-In today's challenge, we will use [Cookiecutter](https://github.com/cookiecutter/cookiecutter) to create our own Nautobot app. 
+在今天的挑战中，我们将使用 [Cookiecutter](https://github.com/cookiecutter/cookiecutter) 来创建我们自己的 Nautobot 应用。
 
 > [!INFORMATION]
-> Cookiecutter is a command-line utility that simplifies the creation of new projects by generating them from predefined templates.
+> Cookiecutter 是一个命令行工具，通过从预定义模板生成项目来简化新项目的创建过程。
 
-Network to Code announced the released a Nautobot App Cookiecutter [repository](https://github.com/nautobot/cookiecutter-nautobot-app/tree/develop) in early 2024, [Introducing Cookiecutter Project Template to Support Nautobot App Development for Network Automation](https://networktocode.com/blog/introducing-cookiecutter-nautobot-app/), and we will use it to create our app in today's challenge. 
+Network to Code 于 2024 年初发布了 Nautobot App Cookiecutter [仓库](https://github.com/nautobot/cookiecutter-nautobot-app/tree/develop)，详见博文[《介绍 Cookiecutter 项目模板以支持网络自动化的 Nautobot App 开发》](https://networktocode.com/blog/introducing-cookiecutter-nautobot-app/)，我们将在今天的挑战中使用它来创建应用。
 
 > [!TIP]
-> For more information on general Cookiecutter usage, feel free to check out [Cookiecutter Quick Start](https://docs.nautobot.com/projects/cookiecutter-nautobot-app/en/latest/user/quick-start/#help) and its related documenation. 
+> 有关 Cookiecutter 的更多通用使用信息，请查阅 [Cookiecutter 快速入门](https://docs.nautobot.com/projects/cookiecutter-nautobot-app/en/latest/user/quick-start/#help)及其相关文档。
 
-Let's get started. 
+让我们开始吧。
 
-## Environment Setup
+## 环境搭建
 
-Please note we **DO NOT** need to start Nautobot and related docker containers under `nautobot-docker-compose` for the next few days. The application development environment includes an inclusive development environment similar to what we have been using.  
+请注意，在接下来的几天里，我们**不需要**启动 `nautobot-docker-compose` 下的 Nautobot 及相关 Docker 容器。应用开发环境包含一个与我们之前使用的类似的完整开发环境。
 
-## Cookiecutter Example
+## Cookiecutter 示例
 
-We will follow the steps laid out in the [Nautobot Cookiecutter repository README](https://github.com/nautobot/cookiecutter-nautobot-app/blob/develop/README.md) to install and create the application: 
+我们将按照 [Nautobot Cookiecutter 仓库 README](https://github.com/nautobot/cookiecutter-nautobot-app/blob/develop/README.md) 中的步骤来安装并创建应用：
 
 ```
 @ericchou1 ➜ ~ $ pip install cookiecutter
@@ -26,16 +26,16 @@ We will follow the steps laid out in the [Nautobot Cookiecutter repository READM
 Successfully installed Jinja2-3.1.6 MarkupSafe-3.0.2 arrow-1.3.0 binaryornot-0.4.4 chardet-5.2.0 cookiecutter-2.6.0 python-dateutil-2.9.0.post0 python-slugify-8.0.4 pyyaml-6.0.2 six-1.17.0 text-unidecode-1.3 types-python-dateutil-2.9.0.20241206
 ```
 
-We will create a `outputs` directory for out app: 
+我们将为应用创建一个 `outputs` 目录：
 
 ```
 @ericchou1 ➜ ~ $ mkdir outputs
 ```
 
-As we say in Cookiecutter land, let's "Bake a cookie": 
+正如 Cookiecutter 的说法，让我们来"烤一块饼干"：
 
 > [!IMPORTANT]
-> Please use your own information, such as GitHub username, Full name, etc. when prompted. 
+> 在系统提示时，请使用你自己的信息，例如 GitHub 用户名、全名等。
 
 ```
 @ericchou1 ➜ ~ $ cookiecutter \
@@ -43,9 +43,9 @@ As we say in Cookiecutter land, let's "Bake a cookie":
   --directory=nautobot-app \
   https://github.com/nautobot/cookiecutter-nautobot-app
 
-  [1/18] codeowner_github_usernames (): <your github username> 
-  [2/18] full_name (Network to Code, LLC): <your full name>
-  [3/18] email (info@networktocode.com): <your email address>
+  [1/18] codeowner_github_usernames (): <你的 GitHub 用户名> 
+  [2/18] full_name (Network to Code, LLC): <你的全名>
+  [3/18] email (info@networktocode.com): <你的邮箱地址>
   [4/18] github_org (nautobot): 
   [5/18] app_name (my_app): my_awesome_app
   [6/18] verbose_name (My Awesome App): My Awesome Application
@@ -79,9 +79,9 @@ Congratulations! Your cookie has now been baked. It is located at /home/vscode/o
 The file `creds.env` will be ignored by git and can be used to override default environment variables.
 ```
 
-Note the steps listed after the cookie is baked to start a development environment. 
+请注意 Cookie 烘焙完成后列出的启动开发环境的步骤。
 
-Here are the contents in the `outputs` directory: 
+以下是 `outputs` 目录的内容：
 
 ```
 @ericchou1 ➜ ~ $ ls outputs/
@@ -108,18 +108,18 @@ drwxr-xr-x 6 vscode vscode  4096 Feb 26 18:34 my_awesome_app
 -rw-r--r-- 1 vscode vscode 30961 Feb 26 18:34 tasks.py
 ```
 
-Let's change to that directory. 
+切换到该目录：
 
 ```
 @ericchou1 ➜ ~ $ cd outputs/nautobot-app-my-awesome-app/
 @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $
 ```
 
-In the next step, we will launch the development environment for our app. 
+下一步，我们将启动应用的开发环境。
 
-## Development Environment
+## 开发环境
 
-The directory contains a development docker environment: 
+该目录包含一个开发用的 Docker 环境：
 
 ```
 @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ ls -l development/
@@ -138,7 +138,7 @@ total 48
 -rw-r--r-- 1 vscode vscode 1303 Feb 26 18:34 towncrier_template.j2
 ```
 
-We will use `poetry`, `invoke`, and other tools: 
+我们将使用 `poetry`、`invoke` 及其他工具：
 
 ```
 @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ poetry lock
@@ -179,10 +179,10 @@ Running docker compose command "run --rm --entrypoint='nautobot-server makemigra
  ...
 ```
 
-Finally, let's launch the containers: 
+最后，启动容器：
 
 > [!TIP]
-> It takes a while for the initial build, wait until you see the `nautobot-1  | Starting development server at http://0.0.0.0:8080/` message before moving on to the next step.  
+> 初次构建需要一些时间，请等到看到 `nautobot-1  | Starting development server at http://0.0.0.0:8080/` 消息后再进行下一步。
 
 ```
 @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ invoke debug
@@ -214,7 +214,7 @@ redis-1     | 1:M 26 Feb 2025 18:58:23.515 # Server initialized
 ...
 ```
 
-There is one more thing we need to do regarding the CSRF setting. This is due to the port forwarding in Codespace that we will need to allow the localhost origin. Do not do this in product, we will only do this for the lab: 
+关于 CSRF 设置还有一件事需要处理。这是由于 Codespace 的端口转发需要允许 localhost 来源。请勿在生产环境中执行此操作，这里仅用于实验：
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ docker exec -it -u root my-awesome-app-nautobot-1 bash
@@ -230,32 +230,30 @@ root@b02cb102c0b1:/opt/nautobot# apt install -y vim
 root@b02cb102c0b1:/opt/nautobot# vim nautobot_config.py 
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080", "https://localhost:8080"] 
-
 ```
 
 ![csrf_trusted_origin](images/CSRF_Trusted_Origin.png)
 
-We can now launch the browser at `port 8080` and login with `admin/admin`, note we now also have a [Django Debug Toolbar](https://django-debug-toolbar.readthedocs.io/en/latest/) along with the app. We can hide it with the `Hide >>` button: 
+现在我们可以在 `8080` 端口打开浏览器，使用 `admin/admin` 登录。注意，应用还附带了一个 [Django Debug Toolbar](https://django-debug-toolbar.readthedocs.io/en/latest/)，可以用 `Hide >>` 按钮将其隐藏：
 
 ![initial_home_page](images/initial_home_page.png)
 
-If we navigate down to the `APPS -> Installed Apps` section, we will see our shining new app: 
+导航到 `APPS -> Installed Apps` 部分，就能看到我们崭新的应用：
 
 ![installed_apps](images/installed_apps.png)
 
+恭喜，这是一种快速启动 Nautobot 应用开发环境的绝妙方式，更不用说我们还学到了 Python 社区中的另一个实用工具！
 
-Congratulations, that is one cool way to quickly launch a Nautobot app development environment. Not to mention we just learned another cool tool in the Python community! 
+在接下来的 3 天（到第 45 天），我们将继续使用这个 Cookiecutter 应用。除非你的免费 Codespace 存储配额即将用尽，否则建议停止 Codespace 实例，在接下来几天再回来继续使用。
 
-For the next 3 days (until Day 45), we will be using this cookie-cutter app. Unless you are running out of free Codespace storage credit, my recommendation is to stop the Codespace instance to come back to it for the next few days. 
+## 第 42 天待办事项
 
-## Day 42 To Do
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 codespace 实例。
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+请在你选择的社交媒体上发布今天挑战中构建的新应用截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
 
-Go ahead and post a screenshot of a new app that you have built for today's challenge, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
-
-In tomorrow's challenge, we will be taking a closer look at the file structure for our app. See you tomorrow! 
+在明天的挑战中，我们将更仔细地研究应用的文件结构。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+42+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 42 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 42 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
