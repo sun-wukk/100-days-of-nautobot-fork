@@ -1,11 +1,10 @@
-# Design Future Sites (Part 6)
+# 设计未来站点（第六部分）
 
-Wow, time flies! We are now at the final iteration of our 6-part series. 
+哇，时间过得真快！我们现在来到了这个六部分系列的最终迭代。
 
-## Design Future Sites Part 6 code
+## 设计未来站点第六部分代码
 
-If you had to create a new codespace instance make sure you recreate the file from the previous challenge.
-
+如果你需要创建一个新的 codespace 实例，请确保从上一个挑战中重新创建文件。
 ```shell
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -15,45 +14,44 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch create_site_job.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot create_site_job.py
 ```
 
-We made it to the final day. For this last day of the exercise we will be creating the cables and a circuit for the site and attaching them to the devices. Before we are able to create the circuit, we will need to create Providers and a Type for the circuit. This could have been done during the prerequisites section, but there was a lot of content there so we will just add it here.
+我们终于到了最后一天。在这个练习的最后一天，我们将为站点创建线缆和电路，并将它们连接到设备上。在创建电路之前，我们需要先创建提供商（Provider）和电路类型（CircuitType）。这些本可以在前置条件部分完成，但那部分内容已经很多了，所以我们在这里添加。
 
-Before we proceed, here's a quick glance at our checklist for today:
+在继续之前，让我们快速浏览一下今天的清单：
 
-✅ Day 36:
+✅ 第36天：
 
-    ✅ Create relationships
+    ✅ 创建关系
 
-    ✅ Create the site  
+    ✅ 创建站点
 
-    ✅ Assign a /16 prefix  
-
-
-✅ Day 37:
-
-    ✅ Create roles and assign prefixes for each role  
-
-    ✅ Create racks
-
-    ✅ Establish rack and VLAN relationships 
+    ✅ 分配 /16 前缀
 
 
-✅ Day 38:
+✅ 第37天：
 
-    ✅ Create devices  
-    
-    ✅ Assign VLANs and IPs to critical interfaces  
-    
-    ✅ Establish device and VLAN relationships 
+    ✅ 为每个角色创建并分配前缀
+
+    ✅ 创建机架
+
+    ✅ 建立机架与 VLAN 的关系
 
 
-✅ Day 39:
-- [ ] Connect circuits to edge devices
-- [ ] Cabling devices together 
+✅ 第38天：
 
-## Walkthrough
+    ✅ 创建设备
 
-We are going to add some new imports and a new constant for this last day.
+    ✅ 为关键接口分配 VLAN 和 IP
 
+    ✅ 建立设备与 VLAN 的关系
+
+
+✅ 第39天：
+- [ ] 将电路连接到边缘设备
+- [ ] 为设备之间连接线缆
+
+## 操作说明
+
+在这最后一天，我们将添加一些新的导入语句和一个新的常量。
 ```python
 ####DAY39####
 from nautobot.dcim.models import Cable
@@ -62,15 +60,14 @@ from nautobot.circuits.models import Circuit, CircuitTermination, CircuitType, P
 TRANSIT_PROVIDERS = ["Equinix", "Cologix", "CoreSite"]
 ```
 
-These imports are related to the objects we are going to be creating during this section and the constant TRANSIT_PROVIDERS will allow us to add some providers to Nautobot that we can use as the circuit provider.
+这些导入与我们在本节中将要创建的对象相关，常量 `TRANSIT_PROVIDERS` 将允许我们向 Nautobot 中添加一些可用作电路提供商的提供商。
 
-We will also have to update the Location Type that we use to have the ContentType of CircuitTermination. We will use a helper method to achieve this and call it before we create the site.
-
+我们还需要更新所使用的 LocationType，使其包含 CircuitTermination 的 ContentType。我们将使用一个辅助方法来实现这一点，并在创建站点之前调用它。
 ```python
 def update_location_type_for_circuit_termination(logger, location_type_obj):
     """
-    Ensure the given LocationType includes the content type for CircuitTermination,
-    allowing circuit terminations to be associated with locations of this type.
+    确保给定的 LocationType 包含 CircuitTermination 的内容类型，
+    允许该类型的位置与电路终端相关联。
     """
     from django.contrib.contenttypes.models import ContentType
     from nautobot.circuits.models import CircuitTermination
@@ -79,69 +76,66 @@ def update_location_type_for_circuit_termination(logger, location_type_obj):
     if ct not in location_type_obj.content_types.all():
         location_type_obj.content_types.add(ct)
         location_type_obj.validated_save()
-        logger.info(f"LocationType '{location_type_obj}' updated to include CircuitTermination content type.")
+        logger.info(f"LocationType '{location_type_obj}' 已更新，包含 CircuitTermination 内容类型。")
     else:
-        logger.info(f"LocationType '{location_type_obj}' already includes CircuitTermination content type.")
+        logger.info(f"LocationType '{location_type_obj}' 已包含 CircuitTermination 内容类型。")
 ```
 
-Make sure to add the the call to this new method in your code below the Create Site portion. 
-
+确保在"创建站点"部分下方的代码中添加对这个新方法的调用。
 ```python
         # ----------------------------------------------------------------------------
-        # Create Site
+        # 创建站点
         # ----------------------------------------------------------------------------
         location_type_obj, created = LocationType.objects.get_or_create(name=location_type)
         update_location_type_for_circuit_termination(self.logger, location_type_obj)
 ```
 
-Once these steps have been completed, we will start creating cables.
-
+完成这些步骤后，我们将开始创建线缆。
 ```python
         # ----------------------------------------------------------------------------
-        # Cabling
+        # 线缆连接
         # ----------------------------------------------------------------------------
-        # Connect Edge Routers Together
+        # 连接边缘路由器
         edge_01 = self.devices.get(f"{site_code}-edge-01")
         edge_02 = self.devices.get(f"{site_code}-edge-02")
 
-        # Get interfaces with 'peer' custom field on each edge device
+        # 获取每台边缘设备上具有 'peer' 自定义字段的接口
         peer_intfs_01 = iter(Interface.objects.filter(device=edge_01, _custom_field_data__role="peer"))
         peer_intfs_02 = iter(Interface.objects.filter(device=edge_02, _custom_field_data__role="peer"))
 
-        for link in range(2):  # Create 2 peer links
+        for link in range(2):  # 创建 2 条对等链路
             self.create_p2p_link(next(peer_intfs_01), next(peer_intfs_02))
 
-        # Connect Edge and Leaf Switches together
+        # 连接边缘设备和叶交换机
         leaf_intfs_01 = iter(Interface.objects.filter(device=edge_01, _custom_field_data__role="leaf"))
         leaf_intfs_02 = iter(Interface.objects.filter(device=edge_02, _custom_field_data__role="leaf"))
 
-        # Use the number of leaf devices defined in your DEVICE_ROLES
-        num_leaf = DEVICE_ROLES["leaf"]["per_rack"]  # Adjust if there are multiple racks
+        # 使用 DEVICE_ROLES 中定义的叶设备数量
+        num_leaf = DEVICE_ROLES["leaf"]["per_rack"]  # 如有多个机架请相应调整
 
         for i in range(1, num_leaf + 1):
             leaf_name = f"{site_code}-leaf-{i:02}"
             leaf = self.devices.get(leaf_name)
             if not leaf:
-                self.logger.error(f"Leaf device {leaf_name} not found")
+                self.logger.error(f"未找到叶设备 {leaf_name}")
                 continue
 
             edge_intfs = iter(Interface.objects.filter(device=leaf, _custom_field_data__role="edge"))
 
-            # Create two cables: one from each edge device to this leaf's edge interface.
+            # 创建两条线缆：从每台边缘设备连接到该叶设备的边缘接口。
             self.create_p2p_link(next(leaf_intfs_01), next(edge_intfs))
             self.create_p2p_link(next(leaf_intfs_02), next(edge_intfs))
 ```
 
-We first get the edge devices and find the interfaces that have the `peer` role defined in their custom field data. Once we have that information we need to create the cables and connect them to the devices. We will use a helper function again here to reduce repetitive code. The method is the `create_p2p_link` method. This method takes two interfaces, one from each device, creates a cable and then connects them.
-
+我们首先获取边缘设备，并找到在自定义字段数据中定义了 `peer` 角色的接口。获取这些信息后，我们需要创建线缆并将其连接到设备。这里我们再次使用辅助函数来减少重复代码，即 `create_p2p_link` 方法。该方法接受来自两台设备各一个接口，创建一条线缆并将它们连接起来。
 ```python
     def create_p2p_link(self, interface_a, interface_b):
         """
-        Create a point-to-point link between two interfaces.
-        Adjust this logic with your site's cabling requirements.
+        在两个接口之间创建点对点链路。
+        根据站点的布线要求调整此逻辑。
         """
         
-        # Get content types for each interface
+        # 获取每个接口的内容类型
         type_a = ContentType.objects.get_for_model(interface_a)
         type_b = ContentType.objects.get_for_model(interface_b)
 
@@ -153,47 +147,45 @@ We first get the edge devices and find the interfaces that have the `peer` role 
             defaults={'status': ACTIVE_STATUS}
         )
         if created:
-            self.logger.info(f"Created cable between {interface_a} and {interface_b}")
+            self.logger.info(f"已在 {interface_a} 和 {interface_b} 之间创建线缆")
         else:
-            self.logger.info(f"Cable already exists between {interface_a} and {interface_b}")
+            self.logger.info(f"{interface_a} 和 {interface_b} 之间的线缆已存在")
 ```
 
-The logic is repeated for edge to leaf devices based on the number of leaf devices in the rack which is defined in our DEVICE_ROLES constant. Once all of the devices have been cabled up it is time to move on to creating and terminating circuits.
+根据机架中定义在 `DEVICE_ROLES` 常量里的叶设备数量，对边缘到叶设备的逻辑进行重复处理。所有设备完成布线后，接下来是创建和终止电路。
 
-Before we can start creating circuits we need to create the Providers and the Circuit Types. We added the CONSTANT for TRANSPORT_PROVIDERS already so the code we will need to create the providers and circuit types will look like this. 
-
+在开始创建电路之前，我们需要创建提供商和电路类型。我们已经添加了 `TRANSIT_PROVIDERS` 常量，因此创建提供商和电路类型所需的代码如下所示。
 ```python
         # ----------------------------------------------------------------------------
-        # Create Circuit Providers if they do not exist
+        # 创建电路提供商（如不存在）
         # ----------------------------------------------------------------------------
         for provider_name in TRANSIT_PROVIDERS:
             provider_obj, created = Provider.objects.get_or_create(
                 name=provider_name,
             )
             if created:
-                self.logger.info(f"Created circuit provider: {provider_obj}")
+                self.logger.info(f"已创建电路提供商：{provider_obj}")
             else:
-                self.logger.info(f"Circuit provider {provider_obj} already exists")
+                self.logger.info(f"电路提供商 {provider_obj} 已存在")
 
         # ----------------------------------------------------------------------------
-        # Create CircuitType 'Transit' if it does not exist
+        # 创建 CircuitType 'Transit'（如不存在）
         # ----------------------------------------------------------------------------
         circuit_type, ct_created = CircuitType.objects.get_or_create(
             name="Transit",
         )
         if ct_created:
-            self.logger.info("Created CircuitType 'Transit'")
+            self.logger.info("已创建 CircuitType 'Transit'")
         else:
-            self.logger.info("CircuitType 'Transit' already exists")
+            self.logger.info("CircuitType 'Transit' 已存在")
 ```
 
-This code is pretty self explanatory and similar to what we have been using to create objects throughout this exercise.
+此代码与我们在整个练习中用于创建对象的代码类似，含义不言而喻。
 
-Now that we have providers and circuit types, we can add the final piece of code for site creation to create and terminate the circuits.
-
+现在我们已经有了提供商和电路类型，可以添加站点创建的最后一段代码来创建并终止电路。
 ```python
         # ----------------------------------------------------------------------------
-        # Create Circuits and Connect them
+        # 创建电路并连接
         # ----------------------------------------------------------------------------
         external_intfs_01 = iter(Interface.objects.filter(device=edge_01, _custom_field_data__role="external"))
         external_intfs_02 = iter(Interface.objects.filter(device=edge_02, _custom_field_data__role="external"))
@@ -215,13 +207,13 @@ Now that we have providers and circuit types, we can add the final piece of code
                     tenant=tenant
                 )
 
-                self.logger.info(f"Circuit {circuit_id} successfully created: {circuit}")
+                self.logger.info(f"电路 {circuit_id} 创建成功：{circuit}")
 
-                # Remove any existing termination on side A, if present.
+                # 如果 A 侧已存在终端，先删除。
                 if circuit.circuit_termination_a:
                     circuit.circuit_termination_a.delete()
 
-                # Create a new circuit termination on side A.
+                # 在 A 侧创建新的电路终端。
                 ct = CircuitTermination(
                     circuit=circuit,
                     term_side="A",
@@ -229,7 +221,7 @@ Now that we have providers and circuit types, we can add the final piece of code
                 )
                 ct.validated_save()
 
-                # Create a cable to connect the interface to the circuit termination.
+                # 创建线缆将接口连接到电路终端。
                 cable_status = Status.objects.get(name="Connected")
                 intf_ct = ContentType.objects.get_for_model(intf)
                 ct_ct = ContentType.objects.get_for_model(ct)
@@ -241,21 +233,20 @@ Now that we have providers and circuit types, we can add the final piece of code
                     defaults={'status': cable_status},
                 )
                 if cable_created:
-                    self.logger.info(f"Created cable connecting {intf} and circuit termination {ct}")
+                    self.logger.info(f"已创建连接 {intf} 和电路终端 {ct} 的线缆")
                 else:
-                    self.logger.info(f"Cable already exists connecting {intf} and circuit termination {ct}")
+                    self.logger.info(f"连接 {intf} 和电路终端 {ct} 的线缆已存在")
 ```
 
-We first look for the interfaces that have been created with the `external` role, and then loop through the TRANSPORT_PROVIDERS list and create a circuit for each provider and external interface. Once all of the circuits have been created, we next create a circuit termination for each A side or Device Side.
+我们首先查找具有 `external` 角色的接口，然后遍历 `TRANSIT_PROVIDERS` 列表，为每个提供商和外部接口创建一条电路。所有电路创建完成后，我们为每个 A 侧（即设备侧）创建电路终端。
 
-Finally, we create a cable to connect the device external interfaces to their respective circuits and the job completes successfully.
+最后，我们创建线缆将设备外部接口连接到各自的电路，作业成功完成。
 
-The final code for the project is displayed below for reference.
+项目的最终代码如下所示，供参考。
 
-## Final Code
-
+## 最终代码
 ```python
-"""Job to create a new site of type POP."""
+"""创建 POP 类型新站点的 Job。"""
 
 from itertools import product
 import re
@@ -294,13 +285,13 @@ from nautobot.dcim.models import Cable
 from nautobot.circuits.models import Circuit, CircuitTermination, CircuitType, Provider
 
 
-name = "Data Population Jobs Collection"
+name = "数据填充 Jobs 集合"
 
 
 PREFIX_ROLES = ["p2p", "loopback", "server", "mgmt", "pop"]
 TENANT_NAME = "Data Center"
 ACTIVE_STATUS = Status.objects.get(name="Active")
-# VLAN definitions: key is also used to look up the role.
+# VLAN 定义：键也用于查找角色。
 VLAN_INFO = {
     "server": 1000,
     "mgmt": 99,
@@ -309,7 +300,7 @@ CUSTOM_FIELDS = {
     "role": {"models": [Interface], "label": "Role"},
 }
 
-# Retrieve the content type for Prefix and VLAN models.
+# 获取 Prefix 和 VLAN 模型的内容类型。
 prefix_ct = ContentType.objects.get_for_model(Prefix)
 vlan_ct = ContentType.objects.get_for_model(VLAN)
 
@@ -384,33 +375,32 @@ DEVICE_ROLES = {
 TRANSIT_PROVIDERS = ["Equinix", "Cologix", "CoreSite"]
 
 def create_prefix_roles(logger):
-    """Create all Prefix Roles defined in PREFIX_ROLES and add content types for IPAM Prefix and VLAN."""
+    """创建 PREFIX_ROLES 中定义的所有前缀角色，并为 IPAM Prefix 和 VLAN 添加内容类型。"""
 
-    # Retrieve the content type for Prefix and VLAN models.
+    # 获取 Prefix 和 VLAN 模型的内容类型。
     for role in PREFIX_ROLES:
         role_obj, created = Role.objects.get_or_create(name=role)
-        # Add the Prefix and VLAN content types to the role.
+        # 将 Prefix 和 VLAN 内容类型添加到角色。
         role_obj.content_types.add(prefix_ct, vlan_ct)
         role_obj.validated_save()
-        logger.info(f"Successfully created role {role} with content types for Prefix and VLAN.")
+        logger.info(f"成功创建角色 {role}，包含 Prefix 和 VLAN 的内容类型。")
 
 
 def create_tenant(logger):
-    """Create a tenant with the name defined in TENANT_NAME."""
+    """创建 TENANT_NAME 中定义名称的租户。"""
     tenant_obj, _ = Tenant.objects.get_or_create(name=TENANT_NAME)
     tenant_obj.validated_save()
-    logger.info(f"Successfully created Tenant {TENANT_NAME}.")
+    logger.info(f"成功创建租户 {TENANT_NAME}。")
 
 def create_vlans(logger):
-    """Create predefined VLANs defined in VLAN_INFO, and assign the appropriate role."""
-    # Get the active status from the database.
+    """创建 VLAN_INFO 中定义的预设 VLAN，并分配相应角色。"""
 
     for vlan_name, vlan_id in VLAN_INFO.items():
-        # Retrieve the appropriate role based on the VLAN name.
+        # 根据 VLAN 名称检索相应角色。
         try:
             role_obj = Role.objects.get(name=vlan_name)
         except Role.DoesNotExist:
-            logger.error(f"Role '{vlan_name}' not found. VLAN will be created without a role.")
+            logger.error(f"未找到角色 '{vlan_name}'。将创建没有角色的 VLAN。")
             role_obj = None
 
         defaults = {"name": vlan_name, "status": ACTIVE_STATUS}
@@ -423,12 +413,12 @@ def create_vlans(logger):
         )
         if created:
             vlan_obj.validated_save()
-            logger.info(f"Successfully created VLAN '{vlan_name}' with ID {vlan_id}.")
+            logger.info(f"成功创建 VLAN '{vlan_name}'，ID 为 {vlan_id}。")
         else:
-            logger.info(f"VLAN '{vlan_name}' with ID {vlan_id} already exists.")
+            logger.info(f"VLAN '{vlan_name}'（ID {vlan_id}）已存在。")
 
 def create_custom_fields(logger):
-    """Create all relationships defined in CUSTOM_FIELDS."""
+    """创建 CUSTOM_FIELDS 中定义的所有关系。"""
     for cf_name, field in CUSTOM_FIELDS.items():
         try:
             cf = CustomField.objects.get(key=cf_name)
@@ -437,16 +427,16 @@ def create_custom_fields(logger):
             if "label" in field:
                 cf.label = field.get("label")
             cf.validated_save()
-            logger.info(f"Created custom field '{cf_name}'")
+            logger.info(f"已创建自定义字段 '{cf_name}'")
         for model in field["models"]:
             ct = ContentType.objects.get_for_model(model)
             cf.content_types.add(ct)
             cf.validated_save()
-            logger.info(f"Added content type {ct} to custom field '{cf_name}'")
+            logger.info(f"已将内容类型 {ct} 添加到自定义字段 '{cf_name}'")
 
 def create_device_types(logger):
     """
-    Create DeviceType objects from YAML definitions and add interfaces using InterfaceTemplate.
+    从 YAML 定义创建 DeviceType 对象，并使用 InterfaceTemplate 添加接口。
     """
 
     for device_yaml in DEVICE_TYPES_YAML:
@@ -454,16 +444,16 @@ def create_device_types(logger):
 
         manufacturer_name = data.pop("manufacturer", None)
         if not manufacturer_name:
-            logger.error("Manufacturer not provided in YAML definition.")
+            logger.error("YAML 定义中未提供制造商。")
             continue
         manufacturer_obj, _ = Manufacturer.objects.get_or_create(name=manufacturer_name)
 
         model_name = data.pop("model", None)
         if not model_name:
-            logger.error("Model not provided in YAML for manufacturer %s", manufacturer_name)
+            logger.error("制造商 %s 的 YAML 中未提供型号", manufacturer_name)
             continue
 
-        # Create DeviceType
+        # 创建 DeviceType
         device_type_defaults = {
             k: data[k] for k in ["part_number", "u_height", "is_full_depth", "comments"] if k in data
         }
@@ -475,21 +465,21 @@ def create_device_types(logger):
 
         if created:
             device_type_obj.validated_save()
-            logger.info(f"DeviceType created: {device_type_obj}")
+            logger.info(f"已创建 DeviceType：{device_type_obj}")
         else:
-            logger.info(f"DeviceType already exists: {device_type_obj}")
+            logger.info(f"DeviceType 已存在：{device_type_obj}")
 
-        # Add interfaces using InterfaceTemplate
+        # 使用 InterfaceTemplate 添加接口
         for iface in data.get("interfaces", []):
             pattern = iface.get("pattern")
             iface_type = iface.get("type")
             mgmt_only = iface.get("mgmt_only", False)
 
             if not pattern or not iface_type:
-                logger.error(f"Invalid interface definition in {model_name}: {iface}")
+                logger.error(f"{model_name} 中的接口定义无效：{iface}")
                 continue
 
-            # Generate interfaces from range patterns
+            # 从范围模式生成接口
             interface_names = expand_interface_pattern(pattern)
             for iface_name in interface_names:
                 interface_template, created = InterfaceTemplate.objects.get_or_create(
@@ -501,24 +491,24 @@ def create_device_types(logger):
                     },
                 )
                 if created:
-                    logger.info(f"Added interface {iface_name} ({iface_type}) to {model_name}")
+                    logger.info(f"已将接口 {iface_name}（{iface_type}）添加到 {model_name}")
 
 
 def expand_interface_pattern(pattern):
     """
-    Expands an interface pattern like 'Ethernet[1-60]/[1-4]' into actual names.
-    Supports:
-      - Single range: Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
-      - Nested range: Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
+    将接口模式（如 'Ethernet[1-60]/[1-4]'）展开为实际名称。
+    支持：
+      - 单范围：Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
+      - 嵌套范围：Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
     """
     match = re.findall(r"\[([0-9]+)-([0-9]+)\]", pattern)
     if not match:
-        return [pattern]  # No expansion needed, return as-is.
+        return [pattern]  # 无需展开，原样返回。
 
-    # Convert to lists of numbers
+    # 转换为数字列表
     ranges = [list(range(int(start), int(end) + 1)) for start, end in match]
 
-    # Generate names using cartesian product
+    # 使用笛卡尔积生成名称
     expanded_names = []
     base_name = re.sub(r"\[[0-9]+-[0-9]+\]", "{}", pattern)
 
@@ -541,14 +531,14 @@ def get_or_create_relationship(label, key, source_model, destination_model, rel_
         )
         return rel
     except Exception as e:
-        self.logger.error(f"Error creating relationship {label}: {e}")
-        return Relationship.objects.get(key=key)  # Fallback to existing relationship
+        self.logger.error(f"创建关系 {label} 时出错：{e}")
+        return Relationship.objects.get(key=key)  # 回退到已有关系
 
 ####DAY39####
 def update_location_type_for_circuit_termination(logger, location_type_obj):
     """
-    Ensure the given LocationType includes the content type for CircuitTermination,
-    allowing circuit terminations to be associated with locations of this type.
+    确保给定的 LocationType 包含 CircuitTermination 的内容类型，
+    允许该类型的位置与电路终端相关联。
     """
     from django.contrib.contenttypes.models import ContentType
     from nautobot.circuits.models import CircuitTermination
@@ -557,37 +547,37 @@ def update_location_type_for_circuit_termination(logger, location_type_obj):
     if ct not in location_type_obj.content_types.all():
         location_type_obj.content_types.add(ct)
         location_type_obj.validated_save()
-        logger.info(f"LocationType '{location_type_obj}' updated to include CircuitTermination content type.")
+        logger.info(f"LocationType '{location_type_obj}' 已更新，包含 CircuitTermination 内容类型。")
     else:
-        logger.info(f"LocationType '{location_type_obj}' already includes CircuitTermination content type.")
+        logger.info(f"LocationType '{location_type_obj}' 已包含 CircuitTermination 内容类型。")
 
 class CreatePop(Job):
-    """Job to create a new site of type POP."""
+    """创建 POP 类型新站点的 Job。"""
     ####DAY36####
-    # Receive input from user about site iformation
+    # 接收用户关于站点信息的输入
     location_type = ObjectVar(
     model=LocationType,
-    description = "Select location type for new site."
+    description = "为新站点选择位置类型。"
     )
     parent_site = ObjectVar(
         model=Location,
         required=False,
-        description="Select an existing site to nest this site under. Site will be created as a Region if left blank.",
-        label="Parent Site"
+        description="选择一个现有站点作为上级。若留空，站点将作为顶级 Region 创建。",
+        label="上级站点"
     )
-    site_name = StringVar(description="Name of the new site", label="Site Name")
-    site_facility = StringVar(description="Facility of the new site", label="Site Facility")
+    site_name = StringVar(description="新站点的名称", label="站点名称")
+    site_facility = StringVar(description="新站点的设施", label="站点设施")
     
-    site_code = StringVar(description="Enter Site Code as 2-letter state and 2-digit site ID e.g. NY01 for New York Store ID 01")
+    site_code = StringVar(description="输入站点代码，格式为 2 字母州名加 2 位站点编号，例如 NY01 表示纽约商店 ID 01")
     tenant = ObjectVar(model=Tenant)
 
     def create_p2p_link(self, interface_a, interface_b):
         """
-        Create a point-to-point link between two interfaces.
-        Adjust this logic with your site's cabling requirements.
+        在两个接口之间创建点对点链路。
+        根据站点的布线要求调整此逻辑。
         """
         
-        # Get content types for each interface
+        # 获取每个接口的内容类型
         type_a = ContentType.objects.get_for_model(interface_a)
         type_b = ContentType.objects.get_for_model(interface_b)
 
@@ -599,15 +589,15 @@ class CreatePop(Job):
             defaults={'status': ACTIVE_STATUS}
         )
         if created:
-            self.logger.info(f"Created cable between {interface_a} and {interface_b}")
+            self.logger.info(f"已在 {interface_a} 和 {interface_b} 之间创建线缆")
         else:
-            self.logger.info(f"Cable already exists between {interface_a} and {interface_b}")
+            self.logger.info(f"{interface_a} 和 {interface_b} 之间的线缆已存在")
 
     def run(self, location_type, site_name, site_facility, tenant, site_code, parent_site=None):
-        """Main function to create a site."""
+        """创建站点的主函数。"""
         # ----------------------------------------------------------------------------
-        # Initialize the database with all required objects.
-        # We will build on this in the coming days.
+        # 用所有必需的对象初始化数据库。
+        # 我们将在接下来的几天中对此进行扩展。
         # ----------------------------------------------------------------------------
         create_prefix_roles(self.logger)
         create_tenant(self.logger)
@@ -616,7 +606,7 @@ class CreatePop(Job):
         create_device_types(self.logger)
 
         # ----------------------------------------------------------------------------
-        # Create Relationships
+        # 创建关系
         # ----------------------------------------------------------------------------
         rel_device_vlan = get_or_create_relationship(
             "Device to VLAN", "device_to_vlan", Device, VLAN, RelationshipTypeChoices.TYPE_MANY_TO_MANY
@@ -626,7 +616,7 @@ class CreatePop(Job):
         )
 
         # ----------------------------------------------------------------------------
-        # Create Site
+        # 创建站点
         # ----------------------------------------------------------------------------
         location_type_obj, created = LocationType.objects.get_or_create(name=location_type)
         update_location_type_for_circuit_termination(self.logger, location_type_obj)
@@ -637,25 +627,25 @@ class CreatePop(Job):
             location_type=LocationType.objects.get(name=location_type),
             facility=site_facility,
             status=ACTIVE_STATUS,
-            parent=parent_site,  # Will be None if not provided
+            parent=parent_site,  # 未提供时为 None
             tenant=tenant
         )
         
         if created:
-            message = f"Site '{site_name}' created as a top level Region."
+            message = f"站点 '{site_name}' 已创建为顶级 Region。"
             if parent_site:
-                message = f"Site '{site_name}' successfully nested under '{parent_site.name}'."
+                message = f"站点 '{site_name}' 已成功嵌套在 '{parent_site.name}' 下。"
             self.site.validated_save()
             self.logger.info(message)
 
             pop_role = Role.objects.get(name="pop")
-            self.logger.info(f"Assigning '{site_name}' as '{pop_role}' role.")
+            self.logger.info(f"正在将 '{site_name}' 分配为 '{pop_role}' 角色。")
 
             # ----------------------------------------------------------------------------
-            # Allocate Prefix for this POP
+            # 为此 POP 分配前缀
             # ----------------------------------------------------------------------------
         
-            # Find the first available /16 prefix that isn't assigned to a site yet
+            # 查找第一个尚未分配给站点的可用 /16 前缀
             pop_prefix = Prefix.objects.filter(
                 type="container",
                 prefix_length=POP_PREFIX_SIZE,
@@ -666,22 +656,22 @@ class CreatePop(Job):
             if pop_prefix:
                 pop_prefix.location = self.site
                 pop_prefix.validated_save()
-                self.logger.info(f"Assigned {pop_prefix} to {site_name}.")
+                self.logger.info(f"已将 {pop_prefix} 分配给 {site_name}。")
             else:
-                self.logger.warning("No available /16 prefixes found. Creating a new /16.")
+                self.logger.warning("未找到可用的 /16 前缀。正在创建新的 /16。")
                 top_level_prefix = Prefix.objects.filter(
                     type="container",
                     status=ACTIVE_STATUS,
                     prefix_length=8
                 ).first()
 
-                # Get the first available prefix within the /8
+                # 获取 /8 内的第一个可用前缀
                 first_avail = top_level_prefix.get_first_available_prefix()
 
                 if not first_avail:
-                    raise Exception("No available subnets found within the /8 prefix.")
+                    raise Exception("在 /8 前缀内未找到可用子网。")
 
-                # Iterate over all possible /16 subnets within the /8 and find the first unassigned one
+                # 遍历 /8 内所有可能的 /16 子网，找到第一个未分配的
                 for candidate_prefix in IPv4Network(str(first_avail)).subnets(new_prefix=POP_PREFIX_SIZE):
                     if not Prefix.objects.filter(prefix=str(candidate_prefix)).exists():
                         pop_prefix, created = Prefix.objects.get_or_create(
@@ -692,16 +682,16 @@ class CreatePop(Job):
                             role=pop_role
                         )
                         pop_prefix.validated_save()
-                        self.logger.info(f"Allocated new '{pop_prefix}' for site '{site_name}'.")
+                        self.logger.info(f"已为站点 '{site_name}' 分配新的 '{pop_prefix}'。")
                         break
                 else:
-                    raise Exception("No available /16 prefixes found within the /8 range.")
+                    raise Exception("在 /8 范围内未找到可用的 /16 前缀。")
         else:
-            self.logger.warning(f"Site '{site_name}' already exists.") 
+            self.logger.warning(f"站点 '{site_name}' 已存在。") 
 
         ####DAY37####
         # ----------------------------------------------------------------------------
-        # Create and assign prefixes to roles in POP
+        # 在 POP 中创建前缀并分配给各角色
         # ----------------------------------------------------------------------------
         
         site_subnets = IPv4Network(str(pop_prefix)).subnets(new_prefix=ROLE_PREFIX_SIZE)
@@ -710,7 +700,7 @@ class CreatePop(Job):
         loopback_subnet = next(site_subnets)
         p2p_subnet = next(site_subnets)
 
-        # Assign new subnets to roles
+        # 将新子网分配给角色
         server_role = Role.objects.get(name="server")
         server_prefix, created = Prefix.objects.get_or_create(
             prefix=str(server_subnet),
@@ -722,7 +712,7 @@ class CreatePop(Job):
             tenant=tenant,
             vlan=VLAN.objects.get(name=server_role)
         )
-        self.logger.info(f"'{server_prefix}' assigned to '{server_role}'.")
+        self.logger.info(f"'{server_prefix}' 已分配给 '{server_role}'。")
 
         mgmt_role = Role.objects.get(name="mgmt")
         mgmt_prefix, created = Prefix.objects.get_or_create(
@@ -735,7 +725,7 @@ class CreatePop(Job):
             tenant=tenant,
             vlan=VLAN.objects.get(name=mgmt_role)
         )
-        self.logger.info(f"'{mgmt_prefix}' assigned to '{mgmt_role}'.")
+        self.logger.info(f"'{mgmt_prefix}' 已分配给 '{mgmt_role}'。")
 
         loopback_role = Role.objects.get(name="loopback")
         loopback_prefix, created = Prefix.objects.get_or_create(
@@ -747,7 +737,7 @@ class CreatePop(Job):
             location=self.site,
             tenant=tenant
         )
-        self.logger.info(f"'{loopback_prefix}' assigned to '{loopback_role}'.")
+        self.logger.info(f"'{loopback_prefix}' 已分配给 '{loopback_role}'。")
 
         p2p_role = Role.objects.get(name="p2p")
         p2p_prefix, created = Prefix.objects.get_or_create(
@@ -759,17 +749,17 @@ class CreatePop(Job):
             location=self.site,
             tenant=tenant
         )
-        self.logger.info(f"'{p2p_prefix}' assigned to '{p2p_role}'.") 
+        self.logger.info(f"'{p2p_prefix}' 已分配给 '{p2p_role}'。") 
 
         # ----------------------------------------------------------------------------
-        # Create Racks
+        # 创建机架
         # ----------------------------------------------------------------------------
-        # Initialize global counters
-        global_device_counter = {role: 1 for role in DEVICE_ROLES}  # Keeps track of numbering
-        racks = []  # Store created racks so we can iterate later        
+        # 初始化全局计数器
+        global_device_counter = {role: 1 for role in DEVICE_ROLES}  # 追踪编号
+        racks = []  # 存储已创建的机架以便后续迭代
 
-        # Create racks
-        num_rack = 2 # We can modify this to be an input variable if a site needs more than 2
+        # 创建机架
+        num_rack = 2 # 如果站点需要超过 2 个机架，可将其修改为输入变量
         for num in range(1, num_rack + 1):
             rack_name = f"{site_code.upper()}-{100 + num}"
             rack, created = Rack.objects.get_or_create(
@@ -782,10 +772,10 @@ class CreatePop(Job):
                 tenant=tenant,
             )
             racks.append(rack)
-            self.logger.info(f"Successfully created {rack_name}.")
+            self.logger.info(f"成功创建 {rack_name}。")
 
         # ---------------------------------------------------------------------------
-        # Associate the mgmt and server VLANs with each rack
+        # 将 mgmt 和 server VLAN 与每个机架关联
         # ---------------------------------------------------------------------------
         mgmt_vlan = VLAN.objects.get(name="mgmt")
         server_vlan = VLAN.objects.get(name="server")
@@ -806,7 +796,7 @@ class CreatePop(Job):
             )
         ####DAY38####
         # ----------------------------------------------------------------------------
-        # Create Devices
+        # 创建设备
         # ----------------------------------------------------------------------------
         self.devices = {}
         for rack in racks:  
@@ -817,9 +807,9 @@ class CreatePop(Job):
                 )
                 device_role.content_types.add(prefix_ct, vlan_ct)
                 device_role.validated_save()
-                self.logger.info(f"Created '{device_role}'")
+                self.logger.info(f"已创建 '{device_role}'")
 
-                # Start position for the first device in this rack
+                # 该机架中第一台设备的起始位置
                 position = data.get("rack_elevation", 1)
                 num_devices = data.get("per_rack") 
 
@@ -841,15 +831,15 @@ class CreatePop(Job):
                         tenant=tenant,
                     )
                     device_obj.save()
-                    self.logger.info(f"Device {device_name} successfully created in {rack.name}")
+                    self.logger.info(f"设备 {device_name} 已成功在 {rack.name} 中创建")
 
-                    # Save the device in our inventory for later cabling
+                    # 将设备保存到我们的清单中，以供后续布线使用
                     self.devices[device_obj.name] = device_obj
 
                     position += 1
                     global_device_counter[role] += 1
 
-                    # Assign Loopback IP
+                    # 分配 Loopback IP
                     loopback_prefix = Prefix.objects.get(
                         location=self.site,
                         role=loopback_role,
@@ -858,7 +848,7 @@ class CreatePop(Job):
                     loopback_available_ip = loopback_prefix.get_first_available_ip()
                     
                     if not loopback_available_ip:
-                        self.logger.error(f"No available IPs in prefix {loopback_prefix}")
+                        self.logger.error(f"前缀 {loopback_prefix} 中无可用 IP")
                         return
 
                     loopback_ip, _ = IPAddress.objects.get_or_create(
@@ -868,7 +858,7 @@ class CreatePop(Job):
                         dns_name=f"{role}-{global_device_counter[role]:02}.{site_code}.{tenant.description}"
                     )
 
-                    loopback_ip.mask_length = 32  # L0 subnets assigned as /32 instead of /18
+                    loopback_ip.mask_length = 32  # L0 子网以 /32 分配，而不是 /18
                     loopback_ip.save()
 
                     loopback_intf, _ = Interface.objects.get_or_create(
@@ -881,12 +871,12 @@ class CreatePop(Job):
                     loopback_intf.ip_addresses.add(loopback_ip)
                     loopback_intf.save()
                     
-                    # Assign L0 IP as primary IPv4 for device
+                    # 将 L0 IP 设为设备的主 IPv4
                     device_obj.primary_ip4 = loopback_ip
                     device_obj.save()
-                    self.logger.info(f"Created '{loopback_intf}' with '{loopback_ip}' and assigned to {device_name} as primary IP")
+                    self.logger.info(f"已创建 '{loopback_intf}'，分配了 '{loopback_ip}'，并将其设为 {device_name} 的主 IP")
 
-                    # Assign Role to Interfaces
+                    # 为接口分配角色
                     intfs = iter(Interface.objects.filter(device=device_obj))
                     for int_role, cnt in data.get("interfaces", []):
                         for _ in range(cnt):
@@ -895,7 +885,7 @@ class CreatePop(Job):
                                 intf._custom_field_data = {"role": int_role}
                                 intf.save()
 
-                    # VLAN Assignment for leaf devices
+                    # 为叶设备分配 VLAN
                     if role == "leaf":
                         for vlan_name, vlan_id in VLAN_INFO.items():                            
                             vlan_role = Role.objects.get(name=vlan_name)
@@ -906,7 +896,7 @@ class CreatePop(Job):
                                 role=vlan_role,
                             ).first()
                         
-                            # Find Next available Network for the current vlan role i.e. server or mgmt
+                            # 查找当前 VLAN 角色（如 server 或 mgmt）的下一个可用网络
                             first_avail = vlan_block.get_first_available_prefix()
                             subnet = list(first_avail.subnet(24))[0]
                             vlan_prefix, created = Prefix.objects.get_or_create(
@@ -918,7 +908,7 @@ class CreatePop(Job):
                                 vlan=VLAN.objects.get(name=vlan_role)
                             )
                             
-                            # Create IP Addresses on VLAN Interface
+                            # 在 VLAN 接口上创建 IP 地址
                             vlan_ip, created = IPAddress.objects.get_or_create(
                                 address=str(subnet[0]),
                                 status=ACTIVE_STATUS,
@@ -937,7 +927,7 @@ class CreatePop(Job):
                             intf.save()
 
                             # -----------------------------------------------------------------------
-                            # Associate the mgmt and server VLANs with the device
+                            # 将 mgmt 和 server VLAN 与设备关联
                             # -----------------------------------------------------------------------
                             RelationshipAssociation.objects.get_or_create(
                                 relationship=rel_device_vlan,
@@ -955,70 +945,70 @@ class CreatePop(Job):
                             )
         ####DAY39####
         # ----------------------------------------------------------------------------
-        # Cabling
+        # 线缆连接
         # ----------------------------------------------------------------------------
-        # Connect Edge Routers Together
+        # 连接边缘路由器
         edge_01 = self.devices.get(f"{site_code}-edge-01")
         edge_02 = self.devices.get(f"{site_code}-edge-02")
 
-        # Get interfaces with 'peer' custom field on each edge device
+        # 获取每台边缘设备上具有 'peer' 自定义字段的接口
         peer_intfs_01 = iter(Interface.objects.filter(device=edge_01, _custom_field_data__role="peer"))
         peer_intfs_02 = iter(Interface.objects.filter(device=edge_02, _custom_field_data__role="peer"))
 
-        for link in range(2):  # Create 2 peer links
+        for link in range(2):  # 创建 2 条对等链路
             self.create_p2p_link(next(peer_intfs_01), next(peer_intfs_02))
 
-        # Connect Edge and Leaf Switches together
+        # 连接边缘设备和叶交换机
         leaf_intfs_01 = iter(Interface.objects.filter(device=edge_01, _custom_field_data__role="leaf"))
         leaf_intfs_02 = iter(Interface.objects.filter(device=edge_02, _custom_field_data__role="leaf"))
 
-        # Use the number of leaf devices defined in your DEVICE_ROLES
-        num_leaf = DEVICE_ROLES["leaf"]["per_rack"]  # Adjust if there are multiple racks
+        # 使用 DEVICE_ROLES 中定义的叶设备数量
+        num_leaf = DEVICE_ROLES["leaf"]["per_rack"]  # 如有多个机架请相应调整
 
         for i in range(1, num_leaf + 1):
             leaf_name = f"{site_code}-leaf-{i:02}"
             leaf = self.devices.get(leaf_name)
             if not leaf:
-                self.logger.error(f"Leaf device {leaf_name} not found")
+                self.logger.error(f"未找到叶设备 {leaf_name}")
                 continue
 
             edge_intfs = iter(Interface.objects.filter(device=leaf, _custom_field_data__role="edge"))
 
-            # Create two cables: one from each edge device to this leaf's edge interface.
+            # 创建两条线缆：从每台边缘设备连接到该叶设备的边缘接口。
             self.create_p2p_link(next(leaf_intfs_01), next(edge_intfs))
             self.create_p2p_link(next(leaf_intfs_02), next(edge_intfs))
 
         # ----------------------------------------------------------------------------
-        # Create Circuit Providers if they do not exist
+        # 创建电路提供商（如不存在）
         # ----------------------------------------------------------------------------
         for provider_name in TRANSIT_PROVIDERS:
             provider_obj, created = Provider.objects.get_or_create(
                 name=provider_name,
             )
             if created:
-                self.logger.info(f"Created circuit provider: {provider_obj}")
+                self.logger.info(f"已创建电路提供商：{provider_obj}")
             else:
-                self.logger.info(f"Circuit provider {provider_obj} already exists")
+                self.logger.info(f"电路提供商 {provider_obj} 已存在")
 
         # ----------------------------------------------------------------------------
-        # Create CircuitType 'Transit' if it does not exist
+        # 创建 CircuitType 'Transit'（如不存在）
         # ----------------------------------------------------------------------------
         circuit_type, ct_created = CircuitType.objects.get_or_create(
             name="Transit",
         )
         if ct_created:
-            self.logger.info("Created CircuitType 'Transit'")
+            self.logger.info("已创建 CircuitType 'Transit'")
         else:
-            self.logger.info("CircuitType 'Transit' already exists")
+            self.logger.info("CircuitType 'Transit' 已存在")
 
         # ----------------------------------------------------------------------------
-        # Create Circuits and Connect them
+        # 创建电路并连接
         # ----------------------------------------------------------------------------
         external_intfs_01 = iter(Interface.objects.filter(device=edge_01, _custom_field_data__role="external"))
         external_intfs_02 = iter(Interface.objects.filter(device=edge_02, _custom_field_data__role="external"))
 
         for provider_name in TRANSIT_PROVIDERS:
-            # Retrieve providers
+            # 获取提供商
             provider_obj = Provider.objects.get(name=provider_name)
 
             for intfs_list in [external_intfs_01, external_intfs_02]:
@@ -1035,13 +1025,13 @@ class CreatePop(Job):
                     tenant=tenant
                 )
 
-                self.logger.info(f"Circuit {circuit_id} successfully created: {circuit}")
+                self.logger.info(f"电路 {circuit_id} 创建成功：{circuit}")
 
-                # Remove any existing termination on side A, if present.
+                # 如果 A 侧已存在终端，先删除。
                 if circuit.circuit_termination_a:
                     circuit.circuit_termination_a.delete()
 
-                # Create a new circuit termination on side A.
+                # 在 A 侧创建新的电路终端。
                 ct = CircuitTermination(
                     circuit=circuit,
                     term_side="A",
@@ -1049,7 +1039,7 @@ class CreatePop(Job):
                 )
                 ct.validated_save()
 
-                # Create a cable to connect the interface to the circuit termination.
+                # 创建线缆将接口连接到电路终端。
                 cable_status = Status.objects.get(name="Connected")
                 intf_ct = ContentType.objects.get_for_model(intf)
                 ct_ct = ContentType.objects.get_for_model(ct)
@@ -1061,81 +1051,78 @@ class CreatePop(Job):
                     defaults={'status': cable_status},
                 )
                 if cable_created:
-                    self.logger.info(f"Created cable connecting {intf} and circuit termination {ct}")
+                    self.logger.info(f"已创建连接 {intf} 和电路终端 {ct} 的线缆")
                 else:
-                    self.logger.info(f"Cable already exists connecting {intf} and circuit termination {ct}")
+                    self.logger.info(f"连接 {intf} 和电路终端 {ct} 的线缆已存在")
 
 register_jobs(CreatePop)
-
 ```
 
-🚀Now, for the moment we've all been waiting for...Let's launch our job and see the results!🚀
+🚀现在，让我们期待已久的时刻到来了……启动我们的 Job，看看结果吧！🚀
 
-First, let's check our Circuits by navigating to "CIRCUITS->Circuits" and we should see this:
+首先，让我们导航到"CIRCUITS->Circuits"来检查电路，应该看到如下内容：
 
-![Circuits](images/create_site_day39_1.png)
+![电路](images/create_site_day39_1.png)
 
-These circuits are based on the Providers that we created.
+这些电路基于我们创建的提供商。
 
-![Circuits](images/create_site_day39_2.png)
+![电路](images/create_site_day39_2.png)
 
-We also want to verify that the circuits were assigned as "Transit". We can do so by navigating to "CIRCUITS->Circuit Types->Transit".
+我们还需要验证电路是否被分配为"Transit"类型。可以导航到"CIRCUITS->Circuit Types->Transit"来确认。
 
-![Transit Cicuits](images/create_site_day39_3.png)
+![Transit 电路](images/create_site_day39_3.png)
 
-And FINALLY...the last element is cabling! Here, we want to make sure that our ```edge``` devices have connections to the ```Circuits``` and ```leaf``` devices.
+最后……最后一个要素是线缆连接！在这里，我们需要确保 `edge` 设备已与 `Circuits` 和 `leaf` 设备建立了连接。
 
-![Cabling](images/create_site_day39_4.png)
-
-
-It's time to update our checklist and celebrate! 
-
-🎉 🎉 Congratulations on completing this long exercise 🎉 🎉 
-
-✅ Day 36:
-
-    ✅ Create relationships
-
-    ✅ Create the site  
-
-    ✅ Assign a /16 prefix  
+![线缆连接](images/create_site_day39_4.png)
 
 
-✅ Day 37:
+现在来更新我们的清单并庆祝吧！
 
-    ✅ Create roles and assign prefixes for each role  
+🎉 🎉 恭喜完成这项漫长的练习 🎉 🎉
 
-    ✅ Create racks
+✅ 第36天：
 
-    ✅ Establish rack and VLAN relationships 
+    ✅ 创建关系
 
+    ✅ 创建站点
 
-✅ Day 38:
-
-    ✅ Create devices  
-    
-    ✅ Assign VLANs and IPs to critical interfaces  
-    
-    ✅ Establish device and VLAN relationships 
+    ✅ 分配 /16 前缀
 
 
-✅ Day 39:
+✅ 第37天：
 
-    ✅ Connect circuits to edge devices
+    ✅ 为每个角色创建并分配前缀
 
-    ✅ Cabling devices together 
+    ✅ 创建机架
+
+    ✅ 建立机架与 VLAN 的关系
 
 
+✅ 第38天：
+
+    ✅ 创建设备
+
+    ✅ 为关键接口分配 VLAN 和 IP
+
+    ✅ 建立设备与 VLAN 的关系
 
 
-## Day 39 To Do
+✅ 第39天：
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+    ✅ 将电路连接到边缘设备
 
-Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress!
+    ✅ 为设备之间连接线缆
 
-In tomorrow's challenge, we will conduct a review and look ahead to what we will be encountering over the upcoming days in the 100 Days of Nautobot Challenge. See you tomorrow!
+
+## 第39天待办事项
+
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 codespace 实例。
+
+请在你选择的社交媒体上发布新 Job 成功执行的截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
+
+在明天的挑战中，我们将进行回顾并展望 100 Days of Nautobot 挑战后续几天的内容。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+39+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 39 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 39 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
