@@ -1,38 +1,36 @@
-# Testing for Jobs
+# Job 测试
 
-Welcome to Day 24! In today's challenge, we will introduce an important step: testing our code automatically. 
+欢迎来到第 24 天！在今天的挑战中，我们将介绍一个重要的步骤：自动化测试代码。
 
-If you have experience in software development, you might already notice so far in our days, we have not been writing code to test our code that is often a necessary step in software development. 
+如果您有软件开发经验，可能已经注意到，到目前为止我们还没有编写测试代码——而这在软件开发中往往是必不可少的环节。
 
-Testing is important for several reasons: 
+测试的重要性体现在以下几个方面：
 
-1. When you are writing new code, you need to validate the new code is working as expected. 
-2. When you implement new code, you need to make sure the new code did not break any existing code or affect the expected behavior. 
+1. 编写新代码时，需要验证新代码是否按预期工作。
+2. 引入新代码后，需要确保新代码没有破坏现有功能或影响预期行为。
 
-## Testing in Nautobot Jobs
+## Nautobot Jobs 的测试
 
-Testing is an important topic and many full size books have been written about it. We will revisit the topic in later days and just introduce the concept in today's challenge. 
+测试是一个重要话题，已有许多专著对其进行深入探讨。我们将在后续的挑战中重新审视这一话题，今天仅作概念性介绍。
 
-Since Nautobot is built from the Django framework, Nautobot Jobs can be tested via [Django unit-test](https://docs.djangoproject.com/en/5.1/topics/testing/) features. 
+由于 Nautobot 基于 Django 框架构建，Nautobot Jobs 可以通过 [Django 单元测试](https://docs.djangoproject.com/en/5.1/topics/testing/) 功能进行测试。
 
-However, there are some useful features specific to testing Jobs as explained in the [Testing Jobs](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#testing-jobs) document.   
+此外，[Testing Jobs](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#testing-jobs) 文档中还介绍了一些专门用于测试 Jobs 的实用功能。
 
-Let's set up the environment first. 
+让我们先配置好环境。
 
-## Environment Setup
+## 环境配置
 
-The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
+环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
 
-If you stopped the Codespace environment, simply restart it and use the following steps to start Naudotbot, you do not need to rebuild docker instances, nor import the database again: 
-
+如果已停止 Codespace 环境，只需重新启动并按以下步骤运行 Nautobot，无需重建 Docker 实例或重新导入数据库：
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
 $ invoke debug
 ```
 
-If you need to completely rebuild the environment in Codespace, here are the steps: 
-
+如果需要在 Codespace 中完全重建环境，请执行以下步骤：
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -41,12 +39,11 @@ $ invoke db-import
 $ invoke debug
 ```
 
-We do not need to use Containerlab for today's challenge. 
+今天的挑战无需使用 Containerlab。
 
-## File Creation
+## 创建文件
 
-By now, I am sure creating a Job file is second nature to you. Here is a summary of how to attach to the nautobot docker instance and create a file under `Jobs` root:
-
+相信到现在，创建 Job 文件对您来说已经轻车熟路了。以下是连接到 Nautobot Docker 实例并在 `Jobs` 根目录下创建文件的步骤：
 ```
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -56,24 +53,22 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch job_hook_test.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot job_hook_test.py
 ```
 
-The environment is now setup for today's challenge.  
+今天挑战的环境已配置完毕。
 
-## Execute Existing Test
+## 执行现有测试
 
-There are many software tests written to test Nautobot features. For example, [test_authentication.py](https://github.com/nautobot/nautobot/blob/develop/nautobot/core/tests/test_authentication.py) in the Nautobot code base is used to test external authentication. 
+Nautobot 代码库中已有许多用于测试各项功能的软件测试文件。例如，[test_authentication.py](https://github.com/nautobot/nautobot/blob/develop/nautobot/core/tests/test_authentication.py) 用于测试外部认证功能。
 
-We can execute the test written in that file. The first step is to ssh to the nautobot docker instance: 
-
+我们可以执行该文件中编写的测试。第一步是 SSH 进入 Nautobot Docker 实例：
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@8d0ac3752031:/opt/nautobot#
 ```
 
-Then we can change to the `jobs` directory and execute the test: 
+然后切换到 `jobs` 目录并执行测试：
 
 > [!TIP]
-> The test might take a bit of time as it needs to create a separate test database table. 
-
+> 测试可能需要一些时间，因为需要创建独立的测试数据库表。
 ```
 root@8d0ac3752031:/opt/nautobot# cd jobs/
 root@8d0ac3752031:/opt/nautobot/jobs# nautobot-server test nautobot.core.tests.test_authentication.ExternalAuthenticationTestCase
@@ -104,12 +99,11 @@ Destroying test database for alias 'default'...
 root@eba3a1d8b6ab:/opt/nautobot/jobs# 
 ```
 
-We can follow the same pattern and test our previously created Jobs. 
+我们可以按照相同的模式对之前创建的 Jobs 进行测试。
 
-## Test Current Job
+## 测试现有 Job
 
-Assuming we have the following `hello_job.py` file under our JOBS root: 
-
+假设我们在 JOBS 根目录下有如下 `hello_job.py` 文件：
 ```
 from nautobot.apps.jobs import Job, register_jobs, ObjectVar, StringVar, IntegerVar, FileVar
 from nautobot.dcim.models.locations import Location
@@ -134,25 +128,22 @@ register_jobs(
 )
 ```
 
-We can write a test to test the log message. The first step is to create a `tests` folder under `nautobot`: 
-
+我们可以编写测试来验证日志消息。第一步是在 `nautobot` 目录下创建 `tests` 文件夹：
 ```
 root@ee2753f052ae:/opt/nautobot/jobs# mkdir /opt/nautobot/tests
 root@ee2753f052ae:/opt/nautobot/jobs# touch /opt/nautobot/tests/__init__.py
 root@ee2753f052ae:/opt/nautobot/jobs# touch /opt/nautobot/tests/TestJobs_1.py
 ```
 
-We will also specify the `JOBS_ROOT` environment variable: 
-
+同时设置 `JOBS_ROOT` 环境变量：
 ```
 root@ee2753f052ae:/opt/nautobot/jobs# export JOBS_ROOT="/opt/nautobot/jobs"
 ```
 
-We will use the following code in the `TestJobs_1.py` file:
+在 `TestJobs_1.py` 文件中编写以下代码：
 
 > [!TIP]
-> This example is taken from [Testing Jobs](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#testing-jobs). If interested, please take a look at the documentation for more explanation. 
-
+> 本示例取自 [Testing Jobs](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#testing-jobs) 文档，如有兴趣请参阅该文档获取更详细的说明。
 ```python 
 from nautobot.apps.testing import run_job_for_testing, TransactionTestCase
 from nautobot.extras.models import Job, JobLogEntry
@@ -160,21 +151,20 @@ from nautobot.extras.models import Job, JobLogEntry
 
 class MyJobTestCase(TransactionTestCase):
     def test_my_job(self):
-        # Testing of Job "HelloWorld" in file "hello_job.py" in $JOBS_ROOT
+        # 测试 $JOBS_ROOT 中 "hello_job.py" 文件内的 "HelloWorld" Job
         # job = Job.objects.get(job_class_name="HelloWorld", module_name="hello_job", source="local")
         job = Job.objects.get(job_class_name="HelloWorld", module_name="hello_job")
 
-        # or, job = Job.objects.get_for_class_path("local/my_job_file/MyJob")
+        # 或者使用：job = Job.objects.get_for_class_path("local/my_job_file/MyJob")
         job_result = run_job_for_testing(job)
 
-        # Inspect the logs created by running the job
+        # 检查运行 Job 所产生的日志
         log_entries = JobLogEntry.objects.filter(job_result=job_result)
         for log_entry in log_entries:
             self.assertEqual(log_entry.message, "Hello, this is my first Nautobot Job.")
 ```
 
-The test can be run the same way: 
-
+测试的运行方式与之前相同：
 ```
 root@ee2753f052ae:/opt/nautobot/tests# nautobot-server test TestJobs_1
 Using NautobotPerformanceTestRunner to run tests ...
@@ -203,18 +193,18 @@ FAILED (failures=1)
 Destroying test database for alias 'default'...
 ```
 
-There is a `AssertionError` at the end, but that is ok at this point. It is more important to see a customized test running at this point. 
+最后出现了 `AssertionError`，但目前这没有关系。更重要的是，我们已经成功运行了一个自定义测试。
 
-Writing tests can sometimes feel like 'extra' work as they do not implement new features, but they are invaluable tools to ensure we detect breaking code quickly and help us sleep at night. 
+编写测试有时感觉像是"额外"工作，因为它们不实现任何新功能，但它们是确保我们能快速发现代码问题的宝贵工具，能让我们高枕无忧。
 
-## Day 24 To Do
+## 第 24 天待办事项
 
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
+欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
 
-In tomorrow's challenge, we will learn more about the nautobot CLI tool `nautobot-server`. See you tomorrow! 
+在明天的挑战中，我们将深入了解 Nautobot CLI 工具 `nautobot-server`。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+24+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 24 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 24 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
