@@ -1,15 +1,15 @@
-# Django Example - Part 4. Add Forms
+# Django 入门（四）：添加表单
 
-In today's challenge, we will finish the 4-part challenge by adding forms for the users to cast their vote. 
+今天是四部曲的收官之战，我们将为用户添加投票表单。
 
-Today's challenge is roughly mapped to [Django Tutorial Part 4](https://docs.djangoproject.com/en/5.1/intro/tutorial04/). Please consult the page for more details about the code. 
+本次挑战大致参照 [Django 教程第四部分](https://docs.djangoproject.com/en/5.1/intro/tutorial04/)，请参阅原文了解代码的更多细节。
 
-## Code Example
+## 代码示例
 
-Let's update the views with the new vote and results function-based views. Each function will specify the new HTML template it will use to return the final page: 
+首先更新视图，添加 `vote`（投票）和 `results`（结果）两个函数视图。每个函数都会指定用于渲染最终页面的 HTML 模板：
 
 ```python
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/views.py 
+# polls/views.py
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -44,10 +44,9 @@ def results(request, question_id):
     return render(request, 'polls/results.html', {'question': question})
 ```
 
-We will modify the `detail.html` page to include a voting mechanism with radio buttons: 
+修改 `detail.html`，加入带单选按钮的投票表单：
 
 ```html
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/templates/polls/detail.html 
 <!DOCTYPE html>
 <html>
 <head>
@@ -70,10 +69,10 @@ We will modify the `detail.html` page to include a voting mechanism with radio b
 </html>
 ```
 
-We will add the new url paths: 
+在 `polls/urls.py` 中添加新的 URL 路径：
 
 ```python
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/urls.py 
+# polls/urls.py
 from django.urls import path
 from . import views
 
@@ -85,10 +84,9 @@ urlpatterns = [
 ]
 ```
 
-We need to create the new `results` template: 
+创建 `results` 结果页模板：
 
 ```html
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/templates/polls/results.html 
 <!DOCTYPE html>
 <html>
 <head>
@@ -106,10 +104,10 @@ We need to create the new `results` template:
 </html>
 ```
 
-We can update `admin.py` to add new choice entries: 
+更新 `admin.py`，支持在管理后台添加选项条目：
 
-```
-(djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/admin.py 
+```python
+# polls/admin.py
 from django.contrib import admin
 from .models import Question, Choice
 
@@ -117,30 +115,29 @@ admin.site.register(Question)
 admin.site.register(Choice)
 ```
 
-Restart the dev server: 
+重启开发服务器：
 
 ```shell
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py runserver 0.0.0.0:8080
 ```
 
-We can now create choices in admin, notice the relationship between Question and Choice, we need to pick the existing question from the drop down menu: 
+现在可以在管理后台创建选项了。注意 Question 与 Choice 之间的关联关系——需要从下拉菜单中选择已有的问题：
 
 ![choice_1](images/choice_1.png)
 
-The list of choices is listed on the main page: 
+各选项会列示在主页面上：
 
 ![choice_2](images/choice_2.png)
 
-
-Let's go ahead and view the `polls` page and vote: 
+打开 `polls` 页面，开始投票：
 
 ![vote_1](images/vote_1.png)
 
-Once the voting is done, we will be redirected to the result page: 
+投票完成后，页面会自动跳转到结果页：
 
 ![vote_2](images/result_1.png)
 
-Final view on directory structure: 
+最终的目录结构如下：
 
 ```shell
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject $ pwd
@@ -193,36 +190,30 @@ Final view on directory structure:
 9 directories, 32 files
 ```
 
-Congratulations on completing the 4-part challenge! 
+恭喜完成这四部曲的全部挑战！
 
-## Final Thoughts
+## 总结与思考
 
-Here are some final thoughts comparing Django and Nautobot: 
+以下是 Django 与 Nautobot 的一些对比思考：
 
-    - In our Django app, we did not require Celery, Redis, or Beats because we do not need to execute asynchronous jobs. 
+- 我们的 Django 应用无需 Celery、Redis 或 Beats，因为它不涉及异步任务的执行。
+- 我们使用 `makemigrations` 和 `migrate` 提交数据库变更；而在前几天的 Nautobot 开发中，`invoke` 命令替我们处理了这些步骤及其他事项。
+- 这个简单的 Django 应用使用 SQLite 作为数据库，整个数据库就是一个单文件；而在 Nautobot 的部署中，我们使用 PostgreSQL 容器作为数据库。
+- 不难发现，`manage.py` 与 `nautobot-server` 的功能十分相似。
+- `mysite` 相当于 Nautobot 本身，`polls` 则相当于各个 Nautobot App。
+- 在这个简单的 Django 示例中，我们忽略了测试、安全及许多其他重要方面。
+- 特别提醒：开发服务器仅供本地调试，不适用于生产环境。
 
-    - In our Django app, we use `makemigrations` and `migrate` to commit database changes. In our previous days, we use `invoke` that took care these steps, amongst others.  
+接下来的几天，我们将把这些 Django 知识融会贯通，运用到 Nautobot App 的实际开发中。
 
-    - In this simple Django app, we use SQLite as database that is only a single file. In our Nautobot setup, we use a Postgres container as our database.  
+## 第 49 天待办事项
 
-    - If you noticed, `manage.py` is similar in function to `nautobot-server`. 
+记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
 
-    - `mysite` is similar to `Nautobot` and `polls` is simliar to different Nautobot apps. 
+请在你选择的社交媒体上发布 Django 应用最终版本的截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
 
-    - In our simple Django apps, we ignored tests, security, and many other important aspects. 
-
-    - Just to be extra clear, the development server is not suitable for production. 
-
-In the next few days, we will see how we can take these Django concepts we learned and apply them in the Nautobot app development context. 
-
-## Day 49 To Do
-
-Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
-
-Go ahead and post a screenshot of the final iteration of the Django app on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
-
-In tomorrow's challenge, we will be taking these Django concepts to the Nautobot app development environment. See you tomorrow! 
+明天的挑战，我们将把这些 Django 概念带入 Nautobot App 开发的实战环境。明天见！
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+49+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 49 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
+[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 49 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
