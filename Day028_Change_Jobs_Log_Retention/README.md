@@ -1,24 +1,24 @@
-# 修改 Job 日志保留策略
+# Change Jobs Log Retention
 
-在今天的挑战中，我们有两个目标：
+In today's challenge, we aim to achieve two goals: 
 
-1. 探索 `JobLogEntry` 数据模型，以便操作 Job 日志条目。
-2. 建立一套处理 Nautobot Job 与数据库模型交互的工作模式。
+1. Explore `JobLogEntry` data model to work with the job log entries. 
+2. Establish a pattern of work when we need to implement a Nautobot job that works with database models. 
 
-换言之，今天的挑战将手把手带您完成以下步骤。
+In other words, today's challenge will take you step-by-step on 
 
-> [!TIP]
-> 日志保留策略也可以在配置文件中设置，如有兴趣请参阅 [NAUTOBOT_CHANGELOG_RETENTION](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/configuration/settings/#changelog_retention)。
+> [!TIP] 
+> The log retention can also be set in the setting file, please take a look at [NAUTOBOT_CHANGELOG_RETENTION](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/configuration/settings/#changelog_retention) if interested. 
 
-让我们开始吧。
+Let's get started.
 
-## 环境配置
+## Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，如需详细步骤请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), please consult the guide for detailed steps if needed.  
 
-## 数据模型探索
+## Data Model Exploration
 
-我们知道 Job 结果日志条目存储在数据库中，但可能不清楚需要操作哪个数据库模型。可以使用 `nbshell` 来探索数据模型：
+We know the job result log entries exist in the database, but we might not know which database model we need to work with. We can use `nbshell` to explore the data models: 
 
 ```
 @ericchou1 ➜ ~ $ cd nautobot-docker-compose/
@@ -26,7 +26,7 @@
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke nbshell
 ```
 
-首先导入所有数据模型进行初步探索：
+We can import all data models as the first pass for exploration: 
 
 ```
 >>> from nautobot.extras.models import *
@@ -34,13 +34,13 @@
 ['AdminGroup', 'Association', 'Avg', 'Cable', 'CablePath', 'Case', 'ChangeLoggedModel', 'ChordCounter', 'Circuit', 'CircuitTermination', 'CircuitType', 'ClockedSchedule', 'CloudAccount', 'CloudNetwork', 'CloudNetworkPrefixAssignment', 'CloudResourceType', 'CloudService', 'CloudServiceNetworkAssignment', 'Cluster', 'ClusterGroup', 'ClusterType', 'Code', 'ComputedField', 'ConfigContext', 'ConfigContextModel', 'ConfigContextSchema', 'ConsolePort', 'ConsolePortTemplate', 'ConsoleServerPort', 'ConsoleServerPortTemplate', 'Constance', 'Contact', 'ContactAssociation', 'ContactMixin', 'ContentType', 'Controller', 'ControllerManagedDeviceGroup', 'Count', 'CrontabSchedule', 'CustomField', 'CustomFieldChoice', 'CustomFieldModel', 'CustomLink', 'Device', 'DeviceBay', 'DeviceBayTemplate', 'DeviceFamily', 'DeviceRedundancyGroup', 'DeviceType', 'DeviceTypeToSoftwareImageFile', 'DynamicGroup', 'DynamicGroupMembership', 'DynamicGroupMixin', 'DynamicGroupsModelMixin', 'Exists', 'ExportTemplate', 'ExternalIntegration', 'F', 'FileAttachment', 'FileProxy', 'FrontPort', 'FrontPortTemplate', 'GitRepository', 'GraphQLQuery', 'Group', 'GroupResult', 'HealthCheckTestModel', 'IPAddress', 'IPAddressToInterface', 'ImageAttachment', 'Interface', 'InterfaceRedundancyGroup', 'InterfaceRedundancyGroupAssociation', 'InterfaceTemplate', 'IntervalSchedule', 'InventoryItem', 'Job', 'JobButton', 'JobHook', 'JobLogEntry', 'JobResult', 'Location', 'LocationType', 'LogEntry', 'Manufacturer', 'Max', 'MetadataChoice', 'MetadataType', 'Min', 'Module', 'ModuleBay', 'ModuleBayTemplate', 'ModuleType', 'Namespace', 'Nonce', 'Note', 'ObjectChange', 'ObjectMetadata', 'ObjectPermission', 'OuterRef', 'Partial', 'PeriodicTask', 'PeriodicTasks', 'Permission', 'Platform', 'PowerFeed', 'PowerOutlet', 'PowerOutletTemplate', 'PowerPanel', 'PowerPort', 'PowerPortTemplate', 'Prefetch', 'Prefix', 'PrefixLocationAssignment', 'Profile', 'Provider', 'ProviderNetwork', 'Q', 'RIR', 'Rack', 'RackGroup', 'RackReservation', 'RearPort', 'RearPortTemplate', 'Relationship', 'RelationshipAssociation', 'RelationshipModel', 'Request', 'Response', 'Role', 'RoleField', 'RouteTarget', 'SQLQuery', 'SavedView', 'SavedViewMixin', 'ScheduledJob', 'ScheduledJobs', 'Secret', 'SecretsGroup', 'SecretsGroupAssociation', 'Service', 'Session', 'SoftwareImageFile', 'SoftwareVersion', 'SolarSchedule', 'StaticGroupAssociation', 'Status', 'StatusField', 'StatusModel', 'Subquery', 'Sum', 'Tag', 'TaggedItem', 'TaskResult', 'Team', 'Tenant', 'TenantGroup', 'Token', 'User', 'UserSavedViewAssociation', 'UserSocialAuth', 'VLAN', 'VLANGroup', 'VLANLocationAssignment', 'VMInterface', 'VRF', 'VRFDeviceAssignment', 'VRFPrefixAssignment', 'VirtualChassis', 'VirtualMachine', 'Webhook', 'When', '_', '__builtins__', 'cache', 'deleted_count', 'get_user_model', 'info_log_entries', 'log', 'reverse', 'settings', 'timezone', 'transaction']
 ```
 
-从模型列表中，`Job` 和 `JobLogEntry` 看起来很有价值。让我们进一步了解：
+From the list of models, `Job` and `JobLogEntry` looks promising. Let's take a look: 
 
 ```
 >>> from nautobot.extras.models import Job, JobLogEntry
 >>> log = JobLogEntry.objects.first()
 
-# 在句点后按 Tab 键查看可用选项
+# Use tab after the period to see the options
 >>> log.
 log.DoesNotExist(                      log.full_clean(                        log.message
 log.Meta(                              log.get_absolute_url(                  log.natural_key(
@@ -63,10 +63,10 @@ log.from_db(                           log.log_object
 >>> 
 
 >>> dir(log)
-['DoesNotExist', 'Meta', 'MultipleObjectsReturned', '__class__', ...]
+['DoesNotExist', 'Meta', 'MultipleObjectsReturned', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__setstate__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_check_column_name_clashes', '_check_constraints', '_check_db_table_comment', '_check_default_pk', '_check_field_name_clashes', '_check_fields', '_check_id_field', '_check_index_together', '_check_indexes', '_check_local_fields', '_check_long_column_names', '_check_m2m_through_same_relationship', '_check_managers', '_check_model', '_check_model_name_db_lookup_clashes', '_check_ordering', '_check_property_name_related_field_accessor_clashes', '_check_single_primary_key', '_check_swappable', '_check_unique_together', '_content_type', '_content_type_cache_key', '_content_type_cached', '_do_insert', '_do_update', '_generate_field_lookups_from_natural_key_field_names', '_get_FIELD_display', '_get_expr_references', '_get_field_value_map', '_get_next_or_previous_by_FIELD', '_get_next_or_previous_in_order', '_get_pk_val', '_get_unique_checks', '_meta', '_perform_date_checks', '_perform_unique_checks', '_prepare_related_fields_for_save', '_save_parents', '_save_table', '_set_pk_val', '_state', 'absolute_url', 'adelete', 'arefresh_from_db', 'asave', 'associated_object_metadata', 'check', 'clean', 'clean_fields', 'composite_key', 'created', 'csv_natural_key_field_lookups', 'date_error_message', 'delete', 'documentation_static_path', 'from_db', 'full_clean', 'get_absolute_url', 'get_constraints', 'get_deferred_fields', 'get_log_level_display', 'get_next_by_created', 'get_previous_by_created', 'grouping', 'id', 'is_cloud_resource_type_model', 'is_contact_associable_model', 'is_dynamic_group_associable_model', 'is_metadata_associable_model', 'is_saved_view_model', 'job_result', 'job_result_id', 'log_level', 'log_object', 'message', 'natural_key', 'natural_key_args_to_kwargs', 'natural_key_field_lookups', 'natural_slug', 'objects', 'pk', 'prepare_database_save', 'present_in_database', 'refresh_from_db', 'save', 'save_base', 'serializable_value', 'unique_error_message', 'validate_constraints', 'validate_unique', 'validated_save']
 ```
 
-可以筛选 `info` 级别的日志条目（您的输出内容会有所不同）：
+We can filter for `info` log entries (your output would be different): 
 
 ```
 >>> info_log_entries = JobLogEntry.objects.filter(log_level="info")
@@ -79,7 +79,7 @@ log.from_db(                           log.log_object
 14
 ```
 
-可以看到，目前有 14 条与 `info` 级别匹配的 `JobLogEntries`。让我们尝试删除它们：
+We can see, at the moment, we have 14 `JobLogEntries` matches the `info` level logs. Let's try to delete them: 
 
 ```
 >>> deleted_count, _ = info_log_entries.delete()
@@ -90,11 +90,11 @@ log.from_db(                           log.log_object
 0
 ```
 
-现在我们已经掌握了构建新 Job 所需的一切，让它自动完成这些操作。
+Great! We now have everything we need to construct a new job that does this automatically for us. 
 
-## 创建 Job
+## Create a Job
 
-我们可以将在 `nbshell` 中实验的命令整合为一个名为 `delete_info_log.py` 的新 Job。该脚本没有引入新内容，只是将我们在 `nbshell` 中执行的命令代码化：
+We can create a new job named `delete_info_log.py` with the commands we experimented with in `nbshell`. There is no new information presented in this script, other than to codify the commands we used in `nbshell`: 
 
 ```python
 from nautobot.apps.jobs import Job, register_jobs
@@ -107,17 +107,17 @@ class DeleteInfoLogEntries(Job):
         description = "A job to delete all information level log entries."
 
     def run(self):
-        # 筛选 info 级别的日志条目
+        # Filter for information level log entries
         info_log_entries = JobLogEntry.objects.filter(log_level="info")
 
-        # 记录待删除条目的数量
+        # Log the number of entries to be deleted
         info_entries_count = info_log_entries.count()
         self.logger.debug(f"Found {info_entries_count} information level log entries to delete.")
 
-        # 删除筛选到的日志条目
+        # Delete the filtered log entries
         deleted_count, _ = info_log_entries.delete()
 
-        # 记录删除结果
+        # Log the result of the deletion
         self.logger.debug(f"Deleted {deleted_count} information level log entries.")
 
 
@@ -126,32 +126,32 @@ register_jobs(
 )
 ```
 
-启用 Job 后，可以运行它来删除其他 `info` 级别的 Job 日志条目：
+After enabling the job, the job can be run to delete other `info` level Job log entries: 
 
 ![jog_log_delete_1](images/jog_log_delete_1.png)
 
-值得一提的是，Nautobot 内置了一个名为 `Logs Cleanup` 的系统 Job，如果只需要进行基础清理，可以直接使用：
+It is worth mentioning there is a bundled `System Job` named `Logs Cleanup` if you want to do basic cleaning: 
 
 ![log_cleanup_job_1](images/log_cleanup_job_1.png)
 
-## 与数据模型交互的通用步骤
+## General Steps for Working with Models
 
-让我们总结今天挑战中与 Nautobot 数据库模型交互的步骤：
+Let's summarize the steps we took in today's challenge to work with Nautobot database models: 
 
-1. 找到需要操作的数据模型。
-2. 对模型条目进行实验和探索。
-3. 将操作步骤代码化为脚本或 Job。
+1. Find the model we should work with. 
+2. Experiment and explore the model entries. 
+3. Codify the steps into scripts or jobs. 
 
-恭喜完成第 028 天的挑战！
+Congratulations on completing Day 028! 
 
-## 第 28 天待办事项
+## Day 28 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布新的"删除 info 级别日志"Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the successful execution of the new `delete information level log` job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将了解 Nautobot Jobs 的保留属性名称。明天见！
+In tomorrow's challenge, we will take a look at the reserved attribute names for Nautobot Jobs. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+28+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 28 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 28 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

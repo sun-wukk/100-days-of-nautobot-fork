@@ -1,14 +1,16 @@
-# 处理上传的 CSV 文件
+# Process Uploaded CSV Files 
 
-在今天的挑战中，我们将在昨天 ```FileVar``` 对象知识的基础上，进一步处理 CSV 文件，并利用其内容来操作 Nautobot 实例中的数据。
+In today's job, we will build on yesterday's knowledge with the ```FileVar``` object but to process a CSV file and use its contents to manipulate the data in our Nautobot instance.
 
-这是一个简单却强大的步骤，展示了如何使用外部信息与 Nautobot 数据模型进行交互。
+This is a simple but powerful step as it demonstrates how we can use external information to work with Nautobot data models. 
 
-## 环境配置
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+## Environment Setup
 
-完整的 Nautobot 启动步骤如下。如果是重启 Codespace 实例，可以跳过 `invoke build` 和 `invoke db-import`，因为容器已经构建完成：
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed.  
+
+The full steps to start Nautobot is listed below. If restarting a Codespace instance, you can skip `invoke build` and `invoke db-import` as the containers were already built: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -17,11 +19,12 @@ $ invoke db-import
 $ invoke debug
 ```
 
-今天挑战的环境已配置完毕。同时，请确保已准备好第 21 天创建的 CSV 文件。
+The environment is now setup for today's challenge.  Also, remember to have the CSV file created on Day 21 with the data we want to process.
 
-## 现有 Job
+## The Current Job
 
-首先，让我们再看一下上次创建的 Job。这里没有新内容，只需确保已启用该 Job 且可以正常运行即可。
+First, let's take another look at the job we created last time. Nothing new here, just make sure that you enable the job and that you can run it.
+
 ```
 from nautobot.apps.jobs import Job, register_jobs, FileVar
 
@@ -48,9 +51,11 @@ register_jobs(
 )
 ```
 
-## 更新后的 Job
+## The Updated Job
 
-当前 Job 读取文件后将内容发送至日志，让用户确认文件已被处理。但这本身并不太实用。我们希望 Job 能够读取数据、解析数据，并在 Nautobot 实例中创建新对象。我们知道文件是文本格式，且按 CSV（逗号分隔值）格式组织。因此，现在对 Job 进行如下改进：
+The current state of the job reads the files and sends the content of the file to the logger so that the user can see that the file was processed. However, that is not very useful on its own. We want our job to read the data, parse it, and create new objects in our Nautobot instance. We know that the files is text and that is formatted as a CSV (Comma Separated Values) file. Thus, now we are modifying our job in the following manner.
+
+
 ```
 from nautobot.apps.jobs import Job, register_jobs, FileVar
 from nautobot.dcim.models import Device, Location, DeviceType
@@ -125,23 +130,26 @@ register_jobs(
 )
 ```
 
-新 Job 包含了从文件读取数据并创建设备所需的逻辑，所有改动均在 `run` 方法中实现。这里有几个新元素，让我们逐一解析。
+The new job includes the logic necessary to read the data from the file and create devices. All the changes were implemented in the `run` method. There are multiple new elements here, so let's take the time to dissect what is going on.
 
-首先，所有包含 `self.logger.info` 的行都可以安全删除。这些日志的作用是帮助您直观地了解 Job 的执行过程，以及它是如何逐行遍历文件的。如果文件包含数千乃至数百万行，这类日志可能会逐渐积累并影响性能。执行 Job 时请关注这些日志，它们有助于加深您对执行过程的理解。
+First, all the lines that include `self.logger.info` can safely be removed. These are there to provide you with an intuition of how the jobs behaves and how it traverses the file line by line. If you have a file with thousands or millions of lines, this kind of logging could start to add up and become a performance problem. Look for those logs when you execute the job; it will help you to better understand the execution.
 
-以下两行代码读取文件内容，并确保使用正确的编码格式。将文件内容存储到 `file_contents` 变量后，我们需要逐行处理。`lines` 变量通过 `splitlines` 方法创建，是一个列表，其中每个元素是文件中的一行，在我们的示例中每行存储一台设备的信息。
+The following two lines read the file, making sure that we use the right encoding. After we have the content of the file stored in the `file_contents` variable we want to process line by line. The `lines`variables is created using the `splitlines` method. `lines` is a list of elements where each element is a line from the file, which in our example stores information of a device.
+
 ```
 file_contents = file.read().decode("utf-8")
 lines = file_contents.splitlines()
 ```
 
-将每台设备的数据作为 `lines` 列表的一个元素后，我们将遍历该数据结构，并为文件中的每一行在 Nautobot 中创建一台新设备。我们跳过第一行，因为它是表头，不包含实际数据。
+Now that we have the data of each device as one element of the `lines` list, we will traverse that data structure and create a new device in Nautobot per line in the file. We have to iterate over each one of the lines. We ignore the first line because it is the header and does not store actual data.
+
 ```
 for line in lines[1:]:
     ...
 ```
 
-最核心的部分是实际创建设备的代码：
+The most important part is where we actually create the devices.
+
 ```
 role = Role.objects.get(name=role_name)
 device_type = DeviceType.objects.get(model=model_name)
@@ -158,32 +166,32 @@ device = Device(
 device.validated_save()
 ```
 
-这里，我们首先使用文件中的字符串来查找与角色、设备类型、位置和状态对应的 Nautobot 对象。对于状态，我们决定统一使用 `Active`。接着，创建一个新对象并存储在 `device` 变量中。该变量持有对象实例，但要将其保存到数据库中，还需要调用 `.validated_save()` 方法。
+Here, we first use the strings from the file to find the Nautobot objects corresponding to the role, device type, location and status. For the status, we are making the decision that we are going to use the `Active` status. Next, we create a new object and store it in the `device` variable. That new variables has the object but we want to save it in the database, we accomplish that with the `.validate_save()` method.
 
-请尝试执行该 Job，Job 完成后进入设备视图，确认两台新设备已成功创建。
+Try to execute the job and when the jobs finishes check the Devices view and validate that the two new devices have been created.
 
-以下是 Job 输出示例：
+Here is a sample of the job output: 
 
 ![job_result_1](images/job_result_1.png)
 
-可以验证设备已成功创建：
+We can check to verify the devices are created: 
 
 ![new_devices](images/new_devices.png)
 
-恭喜完成第 22 天的挑战！
+Great job in completing Day 22! 
 
-# 延伸思考
+# Comments
 
-在尝试这个示例时，您可能会发现一些潜在的改进点。例如，如果想以不同的方式读取文件该怎么做？您可能还会注意到，如果再次运行该 Job，将会产生错误，因为设备已经存在。您希望它有不同的行为吗？您会做哪些改动？在后续的挑战中，您将探索部分这样的情况，但也欢迎您自行尝试这些改动。
+As you try out the example, you will identify potential improvements. For example, what if you want to read the file in a different manner? You might notice that if you run the job it will create the two devices. What about if you run again? The current version of the job will give an error in the second time you run the job because the devices already exists. Would you like it to behave differently? What would you change? You will explore some of these variables as you continue with the challenge, but do not hesitate to try some of those changes on your own.
 
-## 第 22 天待办事项
+## Day 22 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress!
 
-在明天的挑战中，我们将了解与 Nautobot Jobs 相关的 HTML 模板。明天见！
+In tomorrow's challenge, we will take a look at the HTML templates associated with Nautobot Jobs. See you tomorrow!
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+22+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 22 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 22 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

@@ -1,14 +1,15 @@
-# 将 Ansible 与 Jobs 集成
+# Integrate Ansible with Jobs
 
-在今天的挑战中，我们将在 Nautobot Job 中调用一个简单的 Ansible Playbook。这个示例并非用于生产环境，而是为了展示这两款主流工具之间的互操作性。
+In today's challenge, we will call a simple Ansible playbook within a Nautobot Job. This example is not for production use, it is meant to illustrate the interoperability between the two popular tools. 
 
-可以看到，我们的 Job 配置正在逐步变得更加复杂，这令人兴奋！
+As you can tell, we are progressively getting more complex in our Job configuration, this is exciting! 
 
-## 环境配置
+## Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
 
-按照以下步骤启动 Nautobot，如果是重启已有实例且 `build` 和 `db-import` 已完成，可以跳过相应步骤：
+We will follow the same steps to start Nautobot, you can skip `invoke build` and `invoke db-import` if you restarted an existing instance and `build` and `db-import` was already completed: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -17,30 +18,34 @@ $ invoke db-import
 $ invoke debug
 ```
 
-上传并准备 cEOS 镜像，然后启动 Containerlab：
+Let's upload and prepare cEOS image and start Containerlab: 
+
 ```
 $ docker import cEOS64-lab-4.32.0F.tar ceos:4.32.0F
 ```
 
-本实验只需要 `bos-acc-01` 设备：
+For this lab we only needed the `bos-acc-01` devices: 
+
 ```
 $ cd ~/100-days-of-nautobot/clab/
 $ sudo containerlab deploy --topo ceos-lab.clab.yml --node-filter bos-acc-01
 ```
 
-今天挑战的环境已配置完毕。
+The environment is now setup for today's challenge.  
 
-## Ansible 配置
+## Ansible Setup
 
-默认情况下，Ansible 并未安装在我们的 Docker 容器中。需要分别在 `nautobot-worker` 和 `nautobot` 上安装。
+By default, Ansible is not installed in our Docker containers. Let's install them on both the `nautobot-worker` and `nautobot`. 
 
-打开两个终端窗口，分别连接到 `nautobot-worker` 和 `nautobot`：
+Open up two terminal windows, one for `nautobot-worker` and one for `nautobot`: 
+
 ```
 $ docker exec -u root -it nautobot_docker_compose-celery_worker-1 bash
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 ```
 
-在两个容器中分别执行以下步骤安装 Ansible：
+Use the following steps on both to install Ansible: 
+
 ```shell
 root@0936589bc72d:/opt/nautobot# apt update
 root@0936589bc72d:/opt/nautobot# apt install -y software-properties-common
@@ -63,11 +68,12 @@ ansible [core 2.14.18]
   libyaml = True
 ```
 
-现在可以开始构建 Nautobot Job 了。
+Now we are ready to construct our Nautobot Job. 
 
-## 包含 Ansible Playbook 的 Nautobot Job
+## Nautobot Job with Ansible Playbook
 
-在 `/opt/nautobot/jobs` 目录中创建 `hello_world.yml` Playbook：
+We will put a `hello_world.yml` playbook in the `/opt/nautobot/jobs` directory: 
+
 ```
 root@0936589bc72d:/opt/nautobot/jobs# cat hello_world.yml 
 ---
@@ -80,13 +86,14 @@ root@0936589bc72d:/opt/nautobot/jobs# cat hello_world.yml
         msg: "Hello World from {{ inventory_hostname }}"
 ```
 
-该 Playbook 会打印 `inventory_hostname`，以确认我们将所选设备正确传递给了 Playbook。
+The playbook includes a printout for the `inventory_hostname` to make sure we are passing the selected device to the playbook. 
 
-我们可以编写一个 Nautobot Job `hello_ansible_test.py`，允许用户从 Nautobot 中选择设备，并将相关信息写入一个临时文件，该文件随后将作为 Ansible 的动态 Inventory 文件使用。
+We can write a Nautobot Job, `hello_ansible_test.py`, by allowing the user to select the device from Nautobot and writing the information to a temporary file that would later to be used as a dynamic inventory file by Ansible. 
 
-Ansible Playbook 通过 Python 的 `subprocess` 调用。
+Ansible playbook is called with Python `subprocess`. 
 
-Nautobot Job 内容如下：
+The Nautobot Job content is as follows: 
+
 ```python 
 from nautobot.apps.jobs import MultiChoiceVar, MultiObjectVar, Job, ObjectVar, register_jobs, StringVar, IntegerVar
 from nautobot.dcim.models.devices import Device
@@ -107,7 +114,7 @@ class HelloAnsible(Job):
 
     def run(self, devices):
         inventory = {"all": {"hosts": {}}}
-        # 收集 Inventory 信息
+        # Gather inventory information
         for device in devices:
             ip_address = str(device.primary_ip).split('/')[0] 
             inventory["all"]["hosts"][device.name] = {
@@ -120,12 +127,12 @@ class HelloAnsible(Job):
                 "ansible_become_method": "enable"
             }
 
-        # 将 Inventory 写入临时文件
+        # Write the inventory to a temporary file
         inventory_file = "/tmp/inventory.json"
         with open(inventory_file, "w") as f:
             json.dump(inventory, f)
 
-        # 运行 Ansible Playbook
+        # Run the Ansible playbook 
         device = str(device.primary_ip).split('/')[0]
         result = subprocess.run(
             ["ansible-playbook", "-i", inventory_file, "/opt/nautobot/jobs/hello_world.yml"],
@@ -145,29 +152,31 @@ register_jobs(
 )
 ```
 
-启用 Job 后，可以执行并观察结果：
+Once we enable the job, we can execute it and observe the result: 
 
 ![ansible_hello_world_1](images/ansible_hello_world_1.png)
 
-在"Job Result"页面中，可以看到 Ansible Playbook 的输出，包括所选设备的主机名：
+In the "Job Result" page, we can see the output of the Ansible playbook, including the hostname of the device we selected: 
 
 ![ansible_hello_world_2](images/ansible_hello_world_2.png)
 
-## Ansible Playbook 故障排查
+## Troubleshooting Ansible Playbook
 
-由于大部分 Nautobot Job 配置在前几天已有详细介绍，今天挑战中遇到的问题很可能来自 Ansible 本身。
+Since most of the Nautobot Job configuration has been covered in previous days. If you run into problem with today's challenge, it is likely to be an Ansible issue. 
 
-建议先直接在 Nautobot 主机上测试运行 Ansible，确认其可以正常执行。
+I find it helpful to test running Ansible directly on the Nautobot host first to make sure it executes. 
 
-以下是几个需要检查的事项。
+There are several things to check. 
 
-1. 确认 Inventory 文件内容正确：
+1. Make sure the inventory file is written correctly: 
+
 ```
 root@771b55abc34a:/opt/nautobot/jobs# cat /tmp/inventory.json 
 {"all": {"hosts": {"bos-acc-01.infra.valuemart.com": {"ansible_host": "172.17.0.2", "ansible_user": "admin", "ansible_password": "admin", "ansible_connection": "network_cli", "ansible_network_os": "eos", "ansible_become": true, "ansible_become_method": "enable"}}}}
 ```
 
-2. 检查 Ansible Playbook 内容：
+2. Check the content of the Ansible playbook: 
+
 ```
 root@771b55abc34a:/opt/nautobot/jobs# cat hello_world.yml 
 ---
@@ -180,7 +189,8 @@ root@771b55abc34a:/opt/nautobot/jobs# cat hello_world.yml
         msg: "Hello World from {{ inventory_hostname }}"
 ```
 
-3. 在本地直接执行 Ansible Playbook：
+3. Execute Ansible playbook locally: 
+
 ```
 root@771b55abc34a:/opt/nautobot/jobs# ansible-playbook -i /tmp/inventory.json hello_world.yml 
 
@@ -196,16 +206,16 @@ PLAY RECAP *********************************************************************
 bos-acc-01.infra.valuemart.com : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0  
 ```
 
-恭喜完成第 032 天的挑战，您表现得非常出色！
+Congratulations on completing Day 032, you are doing great! 
 
-## 第 32 天待办事项
+## Day 32 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布成功调用 Ansible Playbook 的 Job 执行截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the successful execution of the job calling the Ansible playbook on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-明天见！
+See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+32+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 32 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 32 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 

@@ -1,26 +1,27 @@
-# Job Button - 第 1 部分
+# Job Button - Part 1
 
-到目前为止，我们一直通过 Web 界面来启动 Job。有时候，直接从对象所在页面启动 Job 会更加方便。
+So far in our work, we have been launching jobs via the web interface. Sometimes, it is more convenient to directly launch the jobs from where the object is. 
 
-例如，我们可能有一个用于重启设备接口端口的 Python 脚本。将其转换为 Nautobot Job 后，与其从 Jobs UI 触发该脚本，不如直接从接口页面触发 Job。我们可以通过 Job Button 来实现这一点。
+For example, we might have a Python script that bounce the interface port for a device. Once we convert that to a Nautobot job, instead of trigger that script from the Jobs UI, we might want to directly trigger the job from the interface page. We can do that with a Job button. 
 
 ![job_button_1](images/job_button_1.png)
 
-创建 Job Button 分为两步：
+Creating a Job button is a two-step process: 
 
-第一步：创建 Job Button Receiver。
-第二步：将其与 Job Button 关联。
+Step 1. Create a job button receiver. 
+Step 2. Wire it up with a Job button. 
 
-在今天的挑战中，我们将创建一个简单的 Job Button。在明天的挑战中，我们将在此基础上创建端口重启 Job Button。
+In today's challenge, we will create a simple Job button. In tomorrow's challenge, we will build on the experience and create the port bouncer Job button. 
 
-## 环境配置
+## Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
 
 > [!TIP]
-> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。
+> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. 
 
-按照以下步骤启动 Nautobot：
+We will follow the same steps to start Nautobot: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -29,20 +30,23 @@ $ invoke db-import
 $ invoke debug
 ```
 
-上传并准备 cEOS 镜像，然后启动 Containerlab：
+Let's upload and prepare cEOS image and start Containerlab: 
+
 ```
 $ docker import cEOS64-lab-4.32.0F.tar ceos:4.32.0F
 ```
 
-本实验只需要 BOS 设备：
+For this lab we only needed the BOS devices: 
+
 ```
 $ cd clab/
 $ sudo containerlab deploy --topo ceos-lab.clab.yml --node-filter bos-acc-01,bos-rtr-01
 ```
 
-为今天的挑战创建文件，可以通过共享目录或直接在 Nautobot Docker 容器中操作：
+Let's create a file for today's challenge. We can either do this via the shared directory or directly in the Nautobot docker container: 
 
 ![file_creation.png](images/file_creation.png)
+
 ```
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -52,16 +56,17 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch hello_world_job_button.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot hello_world_job_button.py
 ```
 
-今天挑战的环境已配置完毕。
+The environment is now setup for today's challenge.  
 
-## 第一个 Job Button Receiver
+## First Job Button Receiver 
 
-我们要做的第一件事是创建一个 Job 文件，已在上一步环境配置中完成。
+The first thing we want to do is to create a Job file. We did this in the last step in the environment setup. 
 
-> [!NOTE]
-> 本示例摘自 [Network Automation with Nautobot](https://www.packtpub.com/en-us/product/network-automation-with-nautobot-9781837634514a) 一书的第 11 章。
+> [!NOTE] 
+> This example was taken from Chapter 11 of the book [Network Automation with Nautobot](https://www.packtpub.com/en-us/product/network-automation-with-nautobot-9781837634514a)
 
-以下是 ```hello_world_job_button.py``` 的内容：
+Here is the content of ```hello_world_job_button.py```: 
+
 ```
 # hello_world_job_button.py
 
@@ -84,63 +89,64 @@ class HelloWorldJobButton(JobButtonReceiver):
 register_jobs(HelloWorldJobButton)
 ```
 
-到目前为止，我们应该已经熟悉创建和注册 Job 的整体结构了。不过在这个文件中，我们创建的是 ```Job Button Receiver``` 而非普通 Job。其中 ```obj``` 是一个通用术语，表示我们将该 Receiver 关联到的任意对象。
+By now, we should be familiar with the overall structure of creating a job and register the job. However, in this file, we are creating a ```Job Button Receiver``` instead of a regular job. The ```obj``` is a generic term that describes whatever object we place this receiver at. 
 
-创建 Job 后需要执行 `post-upgrade`：
+We will need to run a `post-upgrade` after creating this job: 
+
 ```
 $ invoke post-upgrade
 ```
 
-现在可以将 Job Receiver 与对象进行关联了。
+We are ready to wire this job receiver with an object. 
 
-## 关联 Job Receiver
+## Wire Up the Job Receiver
 
-默认情况下，Job Button Receiver 不会显示在 Job UI 中。我们需要点击 Job 菜单中的筛选按钮：
+By default, Job button receivers are not visible on the Job UO, We will need to click on the filter button on the Job menu: 
 
 ![job_button_3](images/job_button_3.png)
 
-然后在 "is job button receiver" 选项中选择 ```Yes```，再点击 "Apply"：
+Then pick ```Yes``` for "is job button receiver", then click on "Apply": 
 
 ![job_button_4](images/job_button_4.png)
 
-Job 显示出来后，还需要将其启用：
+Once the job is visible, we still need to enable this job: 
 
 ![job_button_2](images/job_button_2.png)
 
-可以通过 Job 菜单中的 "+" 图标创建新的 Job Button：
+We can create a new job button with the Job menu and the "+" icon: 
 
 ![job_button_5](images/job_button_5.png)
 
-将 Job Button 与 ```dcim|device``` 对象关联，并按如下所示填写其余选项：
+Let us associate the Job button with the ```dcim|device``` object and fill in the rest of the menu as below: 
 
 ![job_button_6](images/job_button_6.png)
 
-创建完成后即可运行。
+Once it is created, we are ready to run it. 
 
-## 测试 Job Button
+## Testing the Job Button
 
-导航到任意设备页面，可以看到右上角出现了一个按钮：
+If we navigate to any of our devices, we will now see a button in the top right corner: 
 
 ![job_button_7](images/job_button_7.png)
 
-确认执行后，页面会显示一个查看结果的链接：
+Once we execute it (with confirmation), we see a link to check the results: 
 
 ![job_button_8](images/job_button_8.png)
 
-点击链接可以查看 Job 日志。回顾一下，我们在日志消息中使用了 ```obj.name```、```obj.status``` 和 ```obj.role```，可以验证它们与当前对象的信息是否一致：
+We can click on the link to check on the job logs. If you recall, we used ```obj.name```, ```obj.status```, and ```obj.role``` in the log messages. We can verify they match with the object at hand:  
 
 ![job_button_9](images/job_button_9.png)
 
-恭喜，成功完成了第一个 Job Button 的创建和运行！
+Congratulations, that was a great exercise to get our first job button to work! 
 
-## 第 12 天待办事项
+## Day 12 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布新 Job Button 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#100DON` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the successful execution of the new job button on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#100DON` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将继续乘势而上，创建一个实用的 Job Button。明天见！
+In tomorrow's challenge, we will continue our momentum and continue our path on creating a useful job button. See you there! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+12+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 12 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 12 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

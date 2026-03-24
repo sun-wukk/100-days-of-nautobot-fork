@@ -1,14 +1,14 @@
-# App 打包与发布（下篇）
+# App Bundled and Distribution (Part 2)
 
-欢迎回到应用发布流程的第二部分，让我们继续。
+Welcome back to part 2 of the app distribution process. Let's get started.
 
-## 环境搭建
+## Environment Setup
 
-我们将使用 `nautobot-docker-compose` 实例来安装第 42 天创建、第 44 天导出的 App。
+We will use the `nautobot-docker-compose` instance to install the app we created from Day 42 and exported in Day 44. 
 
-完整的容器启动说明见 `scenario 1`，请参阅 [scenario_1_setup](../Lab_Setup/scenario_1_setup/README.md) 复习搭建步骤。
+The full instruction to launch the containers is in `scenario 1`, please take a look at [scenario_1_setup](../Lab_Setup/scenario_1_setup/README.md) for the setup refresher. 
 
-以下是进入 Codespace 后的步骤摘要。如果环境是从之前的实验重启的且已执行过相关步骤，请跳过 `invoke build` 和 `invoke db-import`：
+Below is a summary of the steps once you are in Codespace, please skip `invoke build` and `invoke db-import` if the environment was restarted from previous days and those steps were already taken: 
 
 ```
 $ cd nautobot-docker-compose/
@@ -18,22 +18,23 @@ $ invoke db-import
 $ invoke debug
 ```
 
-今天的挑战不需要 Containerlab。
+We do not need Containerlab for today's challenge. 
 
-## 安装示例
 
-将 wheel 文件上传到 `nautobot-docker-compose` 目录：
+## Installation Example
+
+We will upload the file to the `nautobod-docker-compose` directory: 
 
 ![upload_wheel_file](images/upload_wheel_file.png)
 
-然后使用 `docker cp` 将安装包复制到 Nautobot 容器的 `/tmp/` 目录：
+Then we can use `docker cp` to copy and paste the package to the Nautobot container `/tmp/` directory: 
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ docker cp my_awesome_app-0.1.0-py3-none-any.whl nautobot_docker_compose-nautobot-1:/tmp/
 Successfully copied 17.4kB to nautobot_docker_compose-nautobot-1:/tmp/
 ```
 
-进入 Nautobot 容器，用 `pip install` 安装该包：
+Let's attach to the Nautobot instance and install the package using `pip install`: 
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ docker exec -it -u root nautobot_docker_compose-nautobot-1 bash
@@ -51,20 +52,21 @@ Successfully installed my-awesome-app-0.1.0
 
 root@48e06f355729:/tmp# pip list | grep my-awesome
 my-awesome-app                 0.1.0
+
 ```
 
-在 `config -> nautobot_config.py` 的 `PLUGIN` 配置项中添加新 App：
+Let's add the app to `config -> nautobot_config.py` configuration under `PLUGIN`: 
 
 ![nautobot_config_1](images/nautobot_config_1.png)
 
-此时会看到新 App 提示"未应用数据库迁移"的错误：
+We will see this error of `unapplied migration` for the new app: 
 
 ![nautobot_config_2](images/nautobot_config_2.png)
 
-**不要停止**原有实例，另开一个终端执行 `invoke post-upgrade`：
+Without stopping the original instances, perform `invoke post-upgrade` on a separate terminal: 
 
 > [!INFORMATION]
-> 若停止实例后再重启，由于每个 Docker 实例都从全新状态启动，会出现找不到 App 的报错。
+> If we stop the instance, we will see an error of app not found because each docker instance is started from a clean state. 
 
 ```
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ invoke post-upgrade
@@ -79,7 +81,7 @@ Running migrations:
   Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
 ```
 
-也可以直接在 Nautobot 容器内用 `nautobot-server` 命令依次执行 `makemigrations` 和 `migrate`：
+Alternatively we can also execute `makemigration` and `migrate` in the nautobot instance using `nautobot-server` commands:  
 
 ```
 root@543d3084cedf:/opt/nautobot# nautobot-server makemigrations
@@ -105,20 +107,20 @@ Running migrations:
   Refreshed Job "System Jobs: Refresh Dynamic Group Caches" from <RefreshDynamicGroupCaches>
 ```
 
-在 `Installed Apps` 页面，可以看到我们的新 App 已成功安装：
+Under `Installed Apps` we can see our new awecome app installed: 
 
 ![new_app_installed](images/new_app_installed.png)
 
-出色地完成了今天的挑战！
+Great job in completing today's challenge!  
 
-## 第 45 天待办事项
+## Day 45 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-请在你选择的社交媒体上发布新 App 安装到 Nautobot 实例的截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
+Go ahead and post a screenshot of a new app installed on the nautobot instance on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-明天的挑战，我们将深入探索一些 Django 代码。明天见！
+For tomorrow's challenge, we will play with some Django code. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+45+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 45 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 45 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 

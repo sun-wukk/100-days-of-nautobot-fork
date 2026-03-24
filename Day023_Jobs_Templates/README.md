@@ -1,21 +1,22 @@
-# Jobs HTML 模板视图
+# Jobs Template HTML View
 
-在过去 22 天积累的基础上，让我们深入了解构成 Nautobot 的 HTML 模板，并感受 Nautobot 的高度可扩展性——它真正做到了"只要你能想到，就能构建出来"。今天我们将创建一个自定义 HTML 模板，将之前某个验证 Job 的数据以美观的表格形式呈现，并支持导出为 CSV 文件。
+As we progress and build upon the last 22 days, let's take a closer look at the HTML templates that make up Nautobot and see how extensible Nautobot can be, it really is an "if you can dream it, you can build it" framework. Today we are going to create a custom HTML template that takes one of our previous validation jobs and places the data in a nice table which can also be exported to a CSV file.
 
-今天将涵盖以下内容：
-- 如何通过新增"主机名检查"选项卡来扩展 Nautobot 内置的 jobresult.html 模板，展示更新后的 Job（VerifyHostname）返回的自定义数据。
-- 修改 Job 以返回 JSON 数据结构。
-- 通过 Docker 卷挂载新的本地模板文件。
-- 添加 HTML/JavaScript 来展示主机名验证结果，并支持可选的导出功能。
+Today we will cover the following:
+- How to extend Nautobot’s built-in jobresult.html template with a new “Hostname Check” tab that displays custom data returned by an updated job (VerifyHostname). 
+- Editing the job to return a JSON payload
+- Mounting new local template files via Docker volumes
+- Adding HTML/JavaScript to display and optionally export the hostname validation results.
 
 > [!TIP]
-> 直接修改 Nautobot 文件并不是最佳实践，因为每次升级都会覆盖这些改动，长期维护也不理想。Nautobot 应用（App）更适合用于此类定制化需求，后续将会介绍。我们希望这种方式有助于理解 Nautobot 框架的结构。
+> Editing Nautobot files is not the best approach as these changes would be overwritten with each upgrade and wouldn't be ideal long-term to maintain. Nautobot Applications are perfect for this type of customization and will be covered later. We hope this approach is useful in understanding how the Nautobot framework is structured.
 
-## 实验环境配置
+## Lab Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
 
-以下是启动 Nautobot 的步骤回顾。如果是重启之前已停止的 Codespace 实例，可以跳过 `invoke build` 和 `invoke db-import`：
+Here is a review of the steps to start Nautobot. If you are restarting a previously stopped Codespace instance, you can skip `invoke build` and `invoke db-import`: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -23,16 +24,15 @@ $ invoke build
 $ invoke db-import
 $ invoke debug
 ```
+We are ready to do some customization on the jobresult.HTML.
 
-现在可以开始对 jobresult.html 进行定制了。
+## Page Templates
+What are page templates? Let's look directly at the [Nautobot documentation](https://docs.nautobot.com/projects/core/en/stable/development/core/templates/). *"Nautobot comes with a variety of page templates that allow for a lot of flexibility while keeping the page style consistent with the rest of the application."*
 
-## 页面模板
+What this allows us to do is build a simple Jinja2 template that pulls in the existing HTML structure already present in Nautobot so that everything you add maintains the same look and feel.
 
-什么是页面模板？让我们直接看 [Nautobot 文档](https://docs.nautobot.com/projects/core/en/stable/development/core/templates/) 的说明：*"Nautobot 提供了多种页面模板，在保持页面风格与应用整体一致的同时，提供了极大的灵活性。"*
+Let's take a look at the `jobsresult.html` found in our container, we can access these files from the docker directly in the CLI: 
 
-这使我们能够构建简单的 Jinja2 模板，复用 Nautobot 中已有的 HTML 结构，确保所有新增内容保持统一的视觉风格。
-
-让我们查看容器中的 `jobresult.html` 文件，可以直接通过命令行访问 Docker 中的这些文件：
 ```bash
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 $ ls /usr/local/lib/python3.8/site-packages/nautobot/extras/templates/extras/job*
@@ -48,21 +48,20 @@ $ ls /usr/local/lib/python3.8/site-packages/nautobot/extras/templates/extras/job
 /usr/local/lib/python3.8/site-packages/nautobot/extras/templates/extras/jobresult.html
 ```
 ![docker_container](images/docker-container-view.jpg)
-
-也可以使用 VSCode 打开该文件。在侧边栏中找到 Docker 鲸鱼图标并点击，您将看到 nautobot-docker-compose 中所有正在运行的容器。找到名为 ```nautobot-docker-compose-nautobot-1``` 的容器，按照以下路径逐级展开文件夹：```/usr/local/lib/python3.8/site-packages/nautobot/extras/templates/extras/jobresult.html```。
+We can also use VSCODE and open the file. In your sidebar you will see the docker whale, click that icon. You should see all the running containers for your nautobot-docker-compose docker. Find the container called ```nautobot-docker-compose-nautobot-1``` and start dropping down all the folders that follow this path - ```/usr/local/lib/python3.8/site-packages/nautobot/extras/templates/extras/jobresult.html```.
 
 ![docker_container_folder_view](images/jobresult-file-in-container.jpg)
 
-右键点击 `jobresult.html`，选择打开。现在可以在 VSCode 中查看该文件，这将使后续操作更加便捷。
+Right-click on `jobresult.html` and click open. You should now be able to see the file in VSCODE, this will make our next step a little easier.
 
 > [!TIP]
-> 也可以在[这里](https://github.com/nautobot/nautobot/blob/develop/nautobot/extras/templates/extras/jobresult.html)直接查看 `jobresult.html` 的代码。
+> You can also view the `jobresult.html` [code](https://github.com/nautobot/nautobot/blob/develop/nautobot/extras/templates/extras/jobresult.html) here as well.
 
-## 更新主机名验证 Job
 
-在第 7 天和第 8 天，我们创建了多个 Job 用于验证序列号、IP 地址、平台配置以及主机名格式。这些 Job 的文件名为 ```data_quality_jobs.py```。打开该文件，我们需要做一个小调整，以便为表格提供数据。
+## Updating the hostname validation job
+On day 7 and 8 we created several jobs designed to validate the inventory for serial numbers, IP addresses, correct platform, and a correctly structured hostname. The file name used for these jobs was called ```data_quality_jobs.py```. Open this file so that we can make a small adjustment that will provide data for a table.
 
-文件底部应有如下代码：
+The existing code should look like this and be located toward the bottom of the file
 ```python
 class VerifyHostname(Job):
     location_to_check = ObjectVar(
@@ -97,7 +96,8 @@ class VerifyHostname(Job):
             self.logger.error(f"{hostname} does Not Match Hostname Pattern.")
 ```
 
-我们将对 run 函数进行若干修改，添加一个简单的 JSON 数据结构。return 语句将使这些数据在后续 HTML 模板中可供迭代访问。
+We will make a few changes to the run function that will add a simple JSON structure. The return statement will make this data available to iterate over later in our HTML template.
+
 ```python
 class VerifyHostname(Job):
     location_to_check = ObjectVar(
@@ -143,17 +143,17 @@ class VerifyHostname(Job):
         return {"results": results}
 ```
 
-## 添加 HTML 模板
+## Adding HTML Template
+We will need to add a couple of new files that will be mapped to the `nautobot-docker-compose` docker we have been using to build our jobs.
 
-我们需要新建几个文件，并将其映射到一直使用的 `nautobot-docker-compose` Docker 容器中。
+Switch back to the VSCODE file explorer, and create a new folder under the ```nautobot-docker-compose``` folder called ```templates```.  
 
-切换回 VSCode 文件资源管理器，在 ```nautobot-docker-compose``` 目录下新建一个名为 ```templates``` 的文件夹。
-
-在该文件夹中创建两个新文件：
+In this folder create two new files:
 1. customized_jobresult.html
 2. hostname_check_results.html
 
-在 ```environments``` 目录下打开 ```docker-compose-local.yml``` 文件，内容应如下所示：
+In folder named ```environments```, open the ```docker-compose-local.yml``` file. The contents of the file should look like this:
+
 ```yaml
 ---
 services:
@@ -176,12 +176,12 @@ services:
       - "../jobs:/opt/nautobot/jobs"
 ```
 
-我们将在 Nautobot 服务的 volumes 列表中新增两行，用于在容器启动时将本地模板文件映射到容器内的相应目录。
+We will be adding two new lines to the volumes list under the Nautobot service. This will map our local template files to the appropriate folders in the docker container when it's loaded.
 
-更新后的配置如下所示：
-
+The new config should look like this:
 > [!TIP]
-> 注意 volumes 列表中新增的两行。
+> Notice the two new lines under the volumes list.
+
 ```yaml
 ---
 services:
@@ -206,45 +206,45 @@ services:
       - "../jobs:/opt/nautobot/jobs"
 ```
 
-完成这些准备工作后，让我们仔细研究一下在 VSCode 中打开的 jobresult.html 文件。
+With that little housekeeping step out of the way let's take a closer look at the jobresult.html file you have opened in VSCODE.
 
-该模板专门用于以标签页形式呈现单个 `JobResult` 的所有相关信息（如日志、参数、报错栈和输出），以便用户查阅。
+This template is purpose-built to present all relevant details of a single `JobResult` (like logs, arguments, traceback, and outputs) in a user-friendly, tabbed layout. 
 
 > [!TIP]
-> 以下是对该模板的简要说明，目前可能不需要了解所有细节：
-> 1. **页面结构与布局**
->    - 继承 generic/object_detail.html，复用 Nautobot 的标准样式和布局。
->    - 定义多个内容"块"（breadcrumbs、buttons、content_full_width_page、advanced_content_left_page、advanced_content_right_page 等），用于组织 Job 结果数据的展示方式。
-> 2. **面包屑导航**
->    - 在页面顶部渲染面包屑导航，根据 Job 是否关联 job_model、associated_record 或自定义 job class path 动态调整。
-> 3. **按钮与操作**
->    - 展示以下按钮：
->      - 重新运行或运行（根据用户权限及 Job 是否支持重运行/直接运行条件显示）。
->      - 导出（提供以 CSV 格式下载 Job 日志条目的链接）。
-> 4. **标题**
->    - 根据是否存在 job_model、associated_record 或 job，动态设置页面标题。
-> 5. **附加数据选项卡**
->    - Job 完成后会渲染"Job Result"和"Advanced"两个选项卡。
-> 6. **Job Result 选项卡**
->    - 使用包含的局部模板（extras/inc/jobresult.html）渲染 Job 结果数据的主体内容，包括日志。
-> 7. **Advanced 选项卡：左侧面板**
->    - 以 JSON 格式展示：
->      - 任务关键字参数（result.task_kwargs）
->      - 任务位置参数（result.task_args）
->      - Celery 关键字参数（result.celery_kwargs）
-> 8. **Advanced 选项卡：右侧面板**
->    - 展示工作进程信息，包括 worker 主机名、队列、任务名称和 Job 元数据 JSON。
->    - 展示报错栈信息（如果 Job 失败或遇到错误）。
-> 9. **附加选项卡内容**
->    - 在 ```<pre>``` 块中渲染 Job 的标准输出（如有）。
+> This might be more information than you need right now but a quick breakdown of the template is below:
+> 1. **Page Structure and Layout**
+    - Extends generic/object_detail.html to leverage standard Nautobot styling/layout.
+    - Defines multiple content “blocks” (breadcrumbs, buttons, content_full_width_page, advanced_content_left_page, advanced_content_right_page, etc.) to organize how the job result data is presented.
+> 2. **Breadcrumbs**
+    - Renders the breadcrumb trail at the top of the page, which changes depending on whether the job is associated with a job_model, an associated_record, or a custom job class path.
+> 3. **Buttons and Actions**
+    - Displays buttons for:
+        - Re-run or Run (conditionally, if the user has the necessary permissions and the job is re-runnable or can be run directly).
+        - Export (provides a link to download job log entries in CSV format).
+> 4. **Title**
+    - Sets the page title dynamically based on whether a job_model, associated_record, or job exists.
+> 5. **Tabs for Additional Data**
+    - When the job finishes two tabs are rendered, "Job Result", and "Advanced".
+> 6. **Job Result Tab**
+    - Uses an included partial template (extras/inc/jobresult.html) to render the main body of the job’s result data, including logs.
+> 7. **Advanced Tab: Left Panel**
+    - Shows JSON representations of:
+        - Task Keyword Arguments (result.task_kwargs)
+        - Task Positional Arguments (result.task_args)
+        - Celery Keyword Arguments (result.celery_kwargs)
+> 8. **Advanced Tab: Right Panel**
+    - Displays the Worker information, including worker hostname, queue, task name, and job meta JSON.
+    - Shows any Traceback data (if the job failed or encountered errors).
+> 9. **Additional Tab Contents**
+    - Renders the job’s standard output (if present) in a ```<pre>``` block.
 > 10. **JavaScript**
->     - 包含用于处理表格配置和 Job 日志级别过滤的脚本。
+    - Includes scripts to handle table configuration and log-level filtering for the job logs.
 
-在本示例中，我们主要关注文件中的"Tabs（选项卡）"和"Additional Tab Contents（附加选项卡内容）"部分。这两部分代码允许我们在 Job 结果页面中添加一个新选项卡，在 Job 完成后渲染展示。
+For this example we are mostly interested in Tabs and Additional Tab Contents section of the file. These sections of the code will allow us to add a new tab in the Job results page that is rendered after a job has completed. 
 
-### customized_jobresult.html —— 添加选项卡
+### customized_jobresult.html - Adding a Tab
+We are going to add a third tab called "Hostname Check". Look at the "extra_nav_tabs" code block below, this evaluates if there is result data from the job, and if there is result data, then it should display the Job Result tab. 
 
-我们将新增一个名为"Hostname Check"的第三个选项卡。查看下方的"extra_nav_tabs"代码块，它会判断 Job 是否有结果数据，若有则显示 Job Result 选项卡。
 ```jinja
 {% block extra_nav_tabs %}
     {% if result.data.output %}
@@ -255,7 +255,8 @@ services:
 {% endblock %}
 ```
 
-我们将沿用此格式，但不再检查 Job 自身的结果数据，而是判断更新后代码返回的"results"是否为真值。Job 返回的数据可以通过 ```result.result.results``` 访问，其中"results"是我们返回的 JSON 结构的键名。
+We are going to copy this format, but instead of evaluating the result data of the job itself, we want to check if the returned "results" from our updated code is truthy. When returning data in a job you will be able to find it at ```result.result.results```. In our case "results" is the name of the json structure we are returning.
+
 ```jinja
 {% block extra_nav_tabs %}
     {% if result.data.output %}
@@ -271,9 +272,10 @@ services:
 {% endblock %}
 ```
 
-这样，只有当 Job 返回了 Results JSON 结构时，"Hostname Check"选项卡才会显示，其他 Job 不会出现此选项卡。
+This will only display our new "Hostname Check" tab if the Results JSON structure is being returned, this way this tab will not be displayed with any other jobs.
 
-接下来关注文件底部的 ```extra_tab_content``` 块。该块定义了页面各附加选项卡（通过 id 值引用）的内容。下方代码块判断 result.data.output 是否为真值，并渲染相应的选项卡内容。
+The next block of code we want to focus on is the ```extra_tab_content``` toward the bottom of the file. This block defines the content that will appear within additional tabs (referred to by their id values) on the page. The below block checks if the result.data.output is truthy, and renders the appropriate tabs, and links us to the appropriate page with the results that we want.
+
 ```jinja
 {% block extra_tab_content %}
     {% if result.data.output %}
@@ -284,7 +286,7 @@ services:
 {% endblock extra_tab_content %}
 ```
 
-同样地，我们判断 ```result.result.results``` 是否为真值并渲染 hostname-check 选项卡：
+We will again copy this format and check if our ```result.result.results``` is truthy and render the hostname-check tab
 ```jinja
 {% block extra_tab_content %}
     {% if result.data.output %}
@@ -300,7 +302,7 @@ services:
 {% endblock extra_tab_content %}
 ```
 
-添加这两个代码块后，```customized_jobresult.html``` 的完整内容应如下所示：
+After these two blocks have been added the final result of the ```customized_jobresult.html``` should look like this:
 ```html
 {% extends 'generic/object_detail.html' %}
 {% load helpers %}
@@ -469,16 +471,16 @@ services:
 {% endblock %}
 ```
 
-了解了 ```jobresult.html``` 需要调整的内容后，将上述模板复制到我们新建的 ```customized_jobresult.html``` 文件中，注意其中已更新的 ```extra_nav_tabs``` 块和 ```extra_tab_content``` 块。
+Now that we understand what to adjust in ```jobresult.html```, copy the above template into our new file, ```customized_jobresult.html```. Notice the ```extra_nav_tabs``` block and the ```extra_tab_content``` block that should now be updated.
 
-### hostname_check_results.html —— 扩展基础模板
 
-上一步中我们引用了一个尚不存在的文件 ```extras/inc/hostname_check_results.html```，这正是我们在 ```nautobot-docker-compose/template``` 目录中创建的文件，并在 ```extra_tab_content``` 块中链接到了相应位置。
+### hostname_check_results.html - Extending base templates
+In the above step we reference a file that does not yet exist ```extras/inc/hostname_check_results.html```, this is one of the files that we created in our ```nautobot-docker-compose/template``` folder, and linked to the location described in the ```extra_tab_content``` block.
 
-> [!TIP]
-> 以这种方式链接文件，可以在本地编辑文件后立即在容器中看到变更，无需手动移动文件。
+> [!TIP] Linking these files this way allows you to edit the file locally and immediately see changes reflected in the container without manually moving the files.
 
-打开 ```nautobot-docker-compose/template``` 目录下的 ```hostname_check_results.html``` 文件，添加以下内容：
+Open the ```hostname_check_results.html``` file in the ```nautobot-docker-compose/template``` folder and add the following lines:
+
 ```jinja2
 {% if result.result.results %}
     <h1>Hostname Check Results Table</h1>
@@ -511,9 +513,11 @@ services:
 {% endif %}
 ```
 
-这是一个非常简洁的模板，以两列（Hostname 和 Status）表格格式展示输出，使用 `label-success` 和 `label-danger` 样式类分别以绿色和红色标示通过（PASS）或失败（FAIL）的结果。
+This is a really simple template that formats the output in a table with two columns, Hostname and Status. it uses `label-success` and `label-danger` classes to indicate Pass (green) or Fail (red) results. 
 
-完成上述操作后，停止容器后重新启动，可以在终端中按 ```Ctrl+C``` 停止调试进程。
+
+At this point you should stop the containers and then restart them, you can hit ```crtl-c``` in the terminal with the debug information. 
+
 ```bash
 nautobot-1       |   "GET /extras/job-results/2f21d935-942d-4f11-b19d-b50d4562263d/?tab=main HTTP/1.1" 200 215322
 nautobot-1       | 17:25:05.031 INFO    django.server :
@@ -535,7 +539,7 @@ canceled
 (nautobot-docker-compose-py3.10) bbaker4@ByrnsGameRig:~/github-projects/100-days-of-nautobot/nautobot-docker-compose$ 
 ```
 
-容器完全停止后，使用 ```invoke build debug``` 重新启动所有服务。
+Once it has fully stopped go ahead and start everything up again with ```invoke build debug```.
 ```bash
 $ invoke build debug
 Building Nautobot 2.3.2 with Python 3.8...
@@ -556,23 +560,21 @@ nautobot-1       | Starting development server at http://0.0.0.0:8080/
 nautobot-1       | Quit the server with CONTROL-C.
 ```
 
-进入 Jobs 菜单，选择任意位置运行 ```Verify Hostname Pattern For Selected Locations``` Job。执行完成后，结果页面应出现第三个名为"Hostname Check"的选项卡。
-
+Navigate to the jobs and run the ```Verify Hostname Pattern For Selected Locations``` job pick either location. In the results you should now have a 3rd tab called "Hostname Check".
 ![Job Results](images/job-results.jpg)
 
-在"Hostname Check"选项卡中，可以看到主机名验证结果的数据表格。
-
+And in the Hostname Check tab a table of the results of the hostname validation check.
 ![Hostname Table](images/hostname_check.jpg)
 
-如果想在模板底部添加导出按钮，可以在 `hostname_check_results.html` 模板中添加 CSS 代码来支持 CSV 导出功能。
+If you want to add an export button at the bottom of this template you could also add to the `hostname_checkk_results html` template some CSS code to facilitate a .CSV export like this.
 
-在 ```</table>``` 标签下方，在"IF"判断块内添加以下内容：
+Below the ```</table>``` add this line inside the "IF" evaluation.
+
 ```
     </table>
         <button id="export-results" class="btn btn-primary">Export Results</button>
 ```
-
-然后在 ```{% endif %}``` 标签下方添加以下 JavaScript：
+Then below the ```{% endif %}```, add the following JavaScript:
 ```JavaScript
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -585,18 +587,18 @@ nautobot-1       | Quit the server with CONTROL-C.
                 var row = [], cols = rows[i].querySelectorAll('td, th');
                 
                 for (var j = 0; j < cols.length; j++) {
-                    // 清理单元格内容以适配 CSV 格式
+                    // Clean up cell content for CSV
                     var data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
-                    // 转义引号
+                    // Escape quotes
                     data = data.replace(/"/g, '""');
-                    // 必要时添加引号
+                    // Add quotes if necessary
                     if (data.search(/("|,|\n)/g) >= 0) data = '"' + data + '"';
                     row.push(data);
                 }
                 csv.push(row.join(','));
             }
             
-            // 下载文件
+            // Download
             var csvString = csv.join('\n');
             var a         = document.createElement('a');
             a.href        = 'data:attachment/csv,' +  encodeURIComponent(csvString);
@@ -610,18 +612,17 @@ nautobot-1       | Quit the server with CONTROL-C.
 </script>
 ```
 
-刷新页面或重新运行 Job。在"Hostname Check"选项卡中，现在应出现一个"Export"按钮，点击后可下载表格的 CSV 版本。
-
+Refresh the page or re-run the job. In the `Hostname Check` tab, you should now have an `export` button that downloads a CSV version of the table.
 ![Hostname Export](images/hostname_check_with_export.jpg)
 
-## 第 23 天待办事项
+## Day 23 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode` so we can share your progress! 
 
-在明天的挑战中，我们将深入探讨 Job 测试。明天见！
+In tomorrow's challenge, we will explore testing jobs. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+23+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 23 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 23 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

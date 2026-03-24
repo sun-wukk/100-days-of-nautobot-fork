@@ -1,19 +1,19 @@
-# 对象作为变量
+# Object as Variables
 
-在今天的挑战中，我们将涉及编写Nautobot jobs时的另一个基础主题：[Nautobot Job变量](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#variables)。
+In today's challenge, we are going to touch on another foundational topic when it comes to writing Nautobot jobs: [Nautobot Job variables](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#variables).
 
-Job变量是一种方便的方式来接受Nautobot Web UI中的用户输入，该输入可以与后端中的数据相连接。然后我们可以将此值传递到`run()`方法中使用。
+Job variables is a convenient way to accept user input in the Nautobot Web UI that can connect to the data in the backend. We can then pass this value into the `run()` method to be used.
 
-让我们重新启动我们停止的Codespace实验室环境或创建一个新的。
+Let's restart our stopped Codespace lab environment or create a new one. 
 
-## 实验室环境设置
+## Lab Environment Setup
 
-环境设置将与[实验室设置场景1](../Lab_Setup/scenario_1_setup/README.md)相同，以下是步骤的总结，如果需要详细背景，请参考指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed.
 
 > [!TIP]
-> 如果你停止了Codespace环境并再次重新启动，但发现Docker守护程序停止工作，请按照设置指南中的步骤重建环境。
+> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment.
 
-以下是启动Nautobot的步骤回顾：
+Here is a review of the steps to start Nautobot:
 
 ```shell
 $ cd nautobot-docker-compose/
@@ -23,19 +23,19 @@ $ invoke db-import
 $ invoke debug
 ```
 
-我们已准备好创建新的job文件。
+We are ready to create our new job file.
 
-## Job文件创建
+## Job File Creation
 
-让我们为今天的挑战创建一个文件。我们可以通过共享目录或直接在Nautobot docker容器中执行此操作。
+Let's create a file for today's challenge. We can either do this via the shared directory or directly in the Nautobot docker container.  
 
 > [!TIP]
-> 如果需要复习，请查看[第003天 Hello Jobs](../Day003_Hello_Jobs_Part_1/README.md)。
+> Take a look at [Day 003 Hello Jobs](../Day003_Hello_Jobs_Part_1/README.md) if you need a refresher. 
 
-让我们首先在Nautobot docker容器下的`/opt/nautobot/jobs`目录中创建一个名为`Day6_Variable_Example`的文件（如果你愿意，可以通过共享目录创建）：
+Let's begin by creating a file named `Day6_Variable_Example` on the Nautobot docker container under the `/opt/nautobot/jobs` directory (please feel free to create it via the shared directory if you'd prefer):
 
-1. 在`/opt/nautobot/jobs`下创建文件。
-2. 将文件所有权更改为`nautobot:nautobot`。
+1. Create the file under `/opt/nautobot/jobs`.
+2. Change the file ownership to `nautobot:nautobot`.
 
 ```shell
 (nautobot-docker-compose-py3.10) @ericchou1 ➜ ~/nautobot-docker-compose (main) $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
@@ -50,13 +50,13 @@ root@32a27fa1f5a6:/opt/nautobot/jobs# ls -lia Day6_Variable_Example.py
 ```
 
 > [!IMPORTANT]
-> 如果你在Docker容器目录中更改了文件所有权为```nautobot:nautobot```，请确保继续使用此方法修改文件。这有助于防止文件权限问题并确保一致性。
+> If you've changed file ownership to ```nautobot:nautobot``` within the Docker container directory, be sure to continue modifying the file using this method. This helps prevent file permission issues and ensures consistency. 
 
-使用左侧的Docker扩展，我们可以右键单击文件在主窗口中编辑它：
+Using the Docker extension on the left, we can right-click on the file to edit it in the main window:
 
 ![file_edit](images/file_edit.png)
 
-就像在之前的日子里一样，我们将从设置基本要素开始今天的代码：我们的```import```语句、```class Meta```、```run()```方法和```register_jobs```。这确保我们的job得到正确的结构并准备好执行。
+Just like in the previous days, we'll begin today's code by setting up the essential elements: our ```import``` statements, ```class Meta```, ```run()``` method, and ```register_jobs```. This ensures our job is properly structured and ready to execute.
 
 ```python
 from nautobot.apps.jobs import MultiChoiceVar, Job, ObjectVar, register_jobs, TextVar, IntegerVar
@@ -78,7 +78,7 @@ register_jobs(
 )
 ```
 
-不要忘记在单独的终端窗口中执行`invoke post-upgrade`来注册job：
+Don't forget to do a `invoke post-upgrade` in a separate terminal window to register the job:
 
 ```shell
 @ericchou1 ➜ ~ $ cd nautobot-docker-compose/
@@ -86,27 +86,27 @@ register_jobs(
 nautobot-docker-compose (main) $ invoke post-upgrade
 ```
 
-我们应该看到job显示在Jobs下：
+We should see the job show up under Jobs: 
 
 ![variable_job_1](images/variable_job_1.png)
 
-启用Job：
+Enable the Job: 
 
 ![variable_job_2](images/variable_job_2.png)
 
-然后运行它：
+Then run it: 
 
 ![variable_job_3](images/variable_job_3.png)
 
-## 添加变量
+## Adding Variables
 
-注意我们为文件导入了一些额外的对象：
+Notice we imported a few additional objects for our file:
 
 ```python
 from nautobot.apps.jobs import MultiChoiceVar, Job, ObjectVar, register_jobs, TextVar, IntegerVar
 ```
 
-这允许我们向文件中添加`TextVar`和`IntegerVar`选项：
+This allows us to add `TextVar` and `IntegerVar` options to the file: 
 
 ```python
 from nautobot.apps.jobs import MultiChoiceVar, Job, ObjectVar, register_jobs, TextVar, IntegerVar
@@ -132,17 +132,17 @@ register_jobs(
 )
 ```
 
-注意我们需要将变量传递给`run()`方法，在这种情况下是"messages"和"days"，以便使用。
+Notice we need to pass in the variables, in this case "messages" and "days", to the `run()` method in order to be used.
 
-当我们再次尝试运行该job时，应该在运行job页面上看到其他字段：
+We should be able to see the additional fields on the run job page when we try to run the job again:
 
 ![hello_variable_with_input_1](images/hello_variable_with_input_1.png)
 
-如果我们为消息输入"Happy New Year!"，为Days输入"45"，我们应该看到以下结果：
+If we enter "Happy New Year!" for the message and "45" for Days, we should see the following result:
 
 ![hello_variable_with_input_2](images/hello_variable_with_input_2.png)
 
-让我们以(value, label)的形式为我们的输入添加一个[MultichoiceVar](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#choicevar)值：
+Let's add a [MultichoiceVar](https://docs.nautobot.com/projects/core/en/stable/development/jobs/#choicevar) value in the form of (value, label) for our inputs:
 
 ```python
 class HelloVariables(Job):
@@ -160,23 +160,23 @@ class HelloVariables(Job):
 
 ```
 
-我们可以看到额外的选择出现在运行页面上：
+We can see the additional choices show up in the run page:
 
 ![hello_variable_with_input_3](images/hello_variable_with_input_3.png)
 
-注意我们在`run()`中收到的结果是值而不是标签：
+Notice the result we receive in the `run()` is the value and not the label:
 
 ![hello_variable_with_input_4](images/hello_variable_with_input_4.png)
 
-如果我们退一步思考我们必须为所有以前的表单输入编写的所有HTML和Django代码，我们肯定可以欣赏Nautobot变量的简单性。
+If we take a step back and think about all the HTML and Django code we have to write for all previous form inputs, we can certainly appreciate the simplicity of Nautobot variables.
 
-在下一个示例中，我们将看到如何使用`ObjectVar`将变量与我们的数据库模型相连接。
+In the next example, we will see how we can tie the variable with our database models using `ObjectVar`.
 
-## 将ObjectVar与数据相连接
+## Connect ObjectVar with Data
 
-只需几行代码，`ObjectVar`就允许我们将代码与数据库对象相连接。我们将在未来的挑战中广泛使用它。
+With just few lines of code, `ObjectVar` allows us to tie our code with the database objects. We will use it extensively in our future challenges.
 
-让我们看一个位置数据库的示例。我们需要先导入对象，然后我们可以使用`ObjectVar`在我们的代码中引用它：
+Let's see an example of it with the location database. We will need to import the object first, then we can use `ObjectVar` to reference it in our code:
 
 ```python
 from nautobot.dcim.models.locations import Location 
@@ -189,17 +189,17 @@ class HelloVariables(Job):
         self.logger.info(f"Pick a location: {location}")
 ```
 
-就这样！现在我们可以提示用户从我们预定义的位置对象中选择一个位置：
+That is it! Now we can prompt the user to select a location from our predefined location object:
 
 ![object_var_1](images/object_var_1.png)
 
-结果如下：
+And here is the result:  
 
 ![object_var_2](images/object_var_2.png)
 
-## 最终代码
+## Final Code
 
-以下是今天挑战的最终代码：
+Here is the final code for today's challenge:
 
 ```python
 from nautobot.apps.jobs import MultiChoiceVar, Job, ObjectVar, register_jobs, TextVar, IntegerVar
@@ -237,15 +237,15 @@ register_jobs(
 )
 ```
 
-记住我们也可以使用我们从第005天学到的过滤方法来过滤对象。
+Remember we can also use the filtering method we learned from Day 005 to filter objects.
 
-## 第6天待办事项
+## Day 6 To Do
 
-记得在[https://github.com/codespaces/](https://github.com/codespaces/)上停止并删除代码空间实例。
+Remember to stop and delete the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/).
 
-继续在你选择的任何社交媒体上发布job结果页面的屏幕截图，确保你使用标签`#100DaysOfNautobot` `#JobsToBeDone`并标记`@networktocode`，这样我们可以分享你的进展！
+Go ahead and post a screenshot the job result page on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress!
 
-在明天的挑战中，我们将开始使用Nautobot jobs进行一些数据质量检查。明天见！
+In tomorrow's challenge, we will start to do some data quality checks with Nautobot jobs. See you there!
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+6+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 

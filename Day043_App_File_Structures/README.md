@@ -1,8 +1,8 @@
-# Nautobot App 文件结构详解
+# Nautobot App File Structures
 
-今天的挑战，我们将深入探究 [Nautobot App 的结构](https://docs.nautobot.com/projects/core/en/stable/development/apps/api/setup/)。每个 Nautobot App 本质上都是一个独立的 Django 应用，包含数据库模型、URL 路由、HTML 模板和视图逻辑等核心组件。
+In today's challenge, we will dive deeper into the [Nautobot App Structure](https://docs.nautobot.com/projects/core/en/stable/development/apps/api/setup/). Each Nautobot app is a self-contained Django application, which means it contains components such as database models, URL routing, HTML templates, and view construction. 
 
-App 开发者文档中列出了以下目录结构，并对各文件的用途做了简要说明：
+In the app developer guide, the following structure is listed with a one-line explanation of what the file do: 
 
 ```
 app_name/
@@ -42,13 +42,13 @@ app_name/
   - README.md
 ```
 
-对于 Django 新手来说，这份清单初看可能令人望而生畏。好消息是，我们并不需要搞懂每一个文件才能推进开发。比如，如果不需要为 App 构建 REST API，完全可以忽略 `api/` 目录。
+It looks a bit intimidated for someone new to Django. The good news is we do not need to know all the files' purposes to make progress. For example, if we do not want to construct REST APIs for our app, we do not need to worry about the `api/` folder. 
 
-今天我们重点介绍几个最关键的文件。
+We will cover a few of the more important files in today's challenge.   
 
-## 环境搭建
+## Environment Setup
 
-从[第 42 天](../Day042_Baking_an_App_Cookie/README.md)重启 Codespace 实例，然后启动 App 开发环境：
+Restart the Codespace instance from [Day 42](../Day042_Baking_an_App_Cookie/README.md) and start the app development environment: 
 
 ```
 @ericchou1 ➜ ~ $ cd outputs/nautobot-app-my-awesome-app/
@@ -70,11 +70,11 @@ nautobot-1  | Quit the server with CONTROL-C.
 nautobot-1  | 
 ```
 
-让我们开始吧。
+Let's get started. 
 
-## 代码示例
+## Code Example
 
-我们的 Nautobot App 目录结构如下：
+For our Nautobot app, we see the following files in the directory: 
 
 ```
 (my-awesome-app-py3.10) @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ tree .
@@ -192,10 +192,10 @@ nautobot-1  |
 21 directories, 88 files
 ```
 
-逐一解读：
+Let's unpack some of them: 
 
-- 根目录下的 `changes`、`development`、`docs` 等文件暂时可以忽略，重点关注 `my_awesome_app` 文件夹。
-- 在 `my_awesome_app` 目录中，以下文件最值得关注：`models.py`、`navigation.py`、`templates/` 目录、`urls.py` 以及 `views.py`。
+- For now, we can ignore the changes, development, docs, and other files at the root directory except `my_awesome_app` folder. 
+- In the `my_awesome_app` folder, we want to pay more attention to the following items: `models.py`, `navigation.py`, `templates/` folder, `urls.py`, and `views.py`. 
 
 ```
 (my-awesome-app-py3.10) @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ tree my_awesome_app/
@@ -251,94 +251,145 @@ my_awesome_app/
 8 directories, 39 files
 ```
 
-## 核心文件解析
+## Explanation of Key Files and Directories
 
 ### `models.py`
-定义应用的数据库模型（即数据结构）。模型描述了数据在数据库中的存储方式——每个模型对应一张数据表，模型的每个属性对应表中的一列。
+- Defines the database models (schemas) for the application.
+- Models represent the structure of the data stored in the database.
+- Each model corresponds to a database table.
+- Attributes of the model correspond to columns in the table.
 
 ### `navigation.py`
-定义应用的导航结构，控制 App 如何融入 Nautobot 的 UI，包括菜单项、链接及各导航元素的配置。
+- Defines the navigation structure for the application.
+- Configures how the app integrates into the Nautobot UI.
+- Specifies menu items, links, and navigation elements.
 
-### `templates` 目录
-存放用于渲染页面的 HTML 模板文件。模板定义了页面的结构与布局，并结合视图传入的数据动态生成 HTML 内容。
+### `templates` Folder
+- Contains HTML template files used to render views in the application.
+- Templates define the structure and layout of HTML pages.
+- Used to dynamically generate HTML content based on data from views.
 
 ### `urls.py`
-定义应用的 URL 路由，将 URL 规则映射到对应的视图，决定用户访问某个地址时执行哪段逻辑。
+- Defines the URL routing for the application.
+- Maps URL patterns to views.
+- Determines what code to execute when a user visits a specific URL.
 
 ### `views.py`
-定义应用的视图函数或视图类，负责处理请求、执行业务逻辑并返回响应，通常会将数据渲染到模板中呈现给用户。
+- Defines the view functions or classes for the application.
+- Views contain the logic to process requests and return responses.
+- Typically render templates with data.
 
-其余文件的用途简要列举如下。
+The rest of the files' purposes are briefly listed below. 
 
-## 根目录
+## Root Directory
 
-**changes**：用于追踪变更记录，如版本历史或变更日志。
+- **changes**: Directory likely used for tracking changes, such as versioning or change logs.
+- **development**: Contains files related to development environment setup.
+  - **app_config_schema.py**: Schema definition for the application configuration.
+  - **creds.env**: Environment variables for credentials (not committed to version control).
+  - **creds.example.env**: Example credentials file for reference.
+  - **development.env**: Environment variables for the development environment.
+  - **development_mysql.env**: Environment variables for development with MySQL.
+  - **docker-compose.base.yml**: Base Docker Compose file.
+  - **docker-compose.dev.yml**: Docker Compose file for development environment.
+  - **docker-compose.mysql.yml**: Docker Compose file for using MySQL.
+  - **docker-compose.postgres.yml**: Docker Compose file for using PostgreSQL.
+  - **docker-compose.redis.yml**: Docker Compose file for using Redis.
+  - **Dockerfile**: Dockerfile to build the Docker image.
+  - **nautobot_config.py**: Nautobot configuration file.
+  - **towncrier_template.j2**: Template for generating release notes with Towncrier.
 
-**development**：开发环境相关配置文件目录。
-- **app_config_schema.py**：应用配置的 Schema 定义。
-- **creds.env**：凭据相关的环境变量（不提交至版本控制）。
-- **creds.example.env**：凭据文件示例，供参考使用。
-- **development.env**：开发环境的环境变量。
-- **development_mysql.env**：使用 MySQL 时的开发环境变量。
-- **docker-compose.base.yml**：Docker Compose 基础配置文件。
-- **docker-compose.dev.yml**：开发环境专用的 Docker Compose 配置。
-- **docker-compose.mysql.yml**：使用 MySQL 的 Docker Compose 配置。
-- **docker-compose.postgres.yml**：使用 PostgreSQL 的 Docker Compose 配置。
-- **docker-compose.redis.yml**：使用 Redis 的 Docker Compose 配置。
-- **Dockerfile**：用于构建 Docker 镜像的 Dockerfile。
-- **nautobot_config.py**：Nautobot 配置文件。
-- **towncrier_template.j2**：使用 Towncrier 生成发布说明的 Jinja2 模板。
+- **docs**: Documentation files for the app.
+  - **admin**: Documentation for administrators.
+    - **compatibility_matrix.md**: Compatibility information.
+    - **install.md**: Installation instructions.
+    - **release_notes**: Release notes folder.
+      - **index.md**: Index of release notes.
+      - **version_1.0.md**: Release notes for version 1.0.
+    - **uninstall.md**: Uninstallation instructions.
+    - **upgrade.md**: Upgrade instructions.
+  - **assets**: Static assets for documentation.
+    - **extra.css**: Additional CSS for styling.
+    - **favicon.ico**: Favicon for the documentation site.
+    - **nautobot_logo.png**: Nautobot logo in PNG format.
+    - **nautobot_logo.svg**: Nautobot logo in SVG format.
+    - **networktocode_bw.png**: Network to Code logo in black and white.
+    - **overrides**: Overrides for documentation templates.
+      - **partials**: Partial template overrides.
+        - **copyright.html**: Copyright information template.
+  - **dev**: Developer documentation.
+    - **arch_decision.md**: Architectural decisions.
+    - **code_reference**: Code reference documentation.
+      - **api.md**: API documentation.
+      - **index.md**: Index of code references.
+      - **package.md**: Package documentation.
+    - **contributing.md**: Contribution guidelines.
+    - **dev_environment.md**: Setup instructions for development environment.
+    - **extending.md**: Instructions for extending the app.
+    - **release_checklist.md**: Checklist for releasing new versions.
+  - **images**: Images used in the documentation.
+    - **icon-my-awesome-app.png**: Icon for the app.
+  - **index.md**: Index page for the documentation.
+  - **requirements.txt**: List of Python dependencies for building the documentation.
+  - **user**: User documentation.
+    - **app_getting_started.md**: Getting started guide.
+    - **app_overview.md**: Overview of the app.
+    - **app_use_cases.md**: Use cases for the app.
+    - **external_interactions.md**: Interactions with external systems.
+    - **faq.md**: Frequently asked questions.
 
-**docs**：应用文档目录。
-- **admin**：运维管理员文档，包含兼容性说明、安装/卸载/升级指南及发布说明。
-- **assets**：文档站点的静态资源，包含样式文件、图标和 Logo 等。
-- **dev**：开发者文档，包含架构决策记录、代码参考、贡献指南、开发环境搭建说明、扩展指南及发布检查清单。
-- **user**：用户文档，包含快速入门、功能概览、使用场景、外部交互说明及常见问题解答。
+- **invoke.example.yml**: Example configuration for Invoke tasks.
+- **invoke.mysql.yml**: Configuration for Invoke tasks with MySQL.
+- **LICENSE**: License file for the project.
+- **mkdocs.yml**: Configuration file for MkDocs documentation generator.
+- **my_awesome_app**: Main application directory.
+  - **api**: API implementation.
+    - **__init__.py**: Initialization file for the API module.
+    - **serializers.py**: Serializers for API endpoints.
+    - **urls.py**: URL routing for API endpoints.
+    - **views.py**: View functions or classes for API endpoints.
+  - **app-config-schema.json**: JSON schema for app configuration.
+  - **filters.py**: Custom filters for the app.
+  - **forms.py**: Django forms for the app.
+  - **__init__.py**: Initialization file for the app module.
+  - **migrations**: Database migrations.
+    - **0001_initial.py**: Initial migration file.
+    - **__init__.py**: Initialization file for the migrations module.
+  - **models.py**: Database models for the app.
+  - **navigation.py**: Navigation configuration for the app.
+  - **tables.py**: Custom tables for the app.
+  - **templates**: Templates for rendering HTML.
+    - **my_awesome_app**: Directory for app-specific templates.
+      - **myawesomeappexamplemodel_retrieve.html**: Template for retrieving example model data.
+  - **tests**: Test cases for the app.
+    - **fixtures.py**: Test fixtures.
+    - **test_api.py**: Tests for API endpoints.
+    - **test_api_views.py**: Tests for API views.
+    - **test_basic.py**: Basic tests.
+    - **test_filter_myawesomeappexamplemodel.py**: Tests for filters.
+    - **test_form_myawesomeappexamplemodel.py**: Tests for forms.
+    - **test_model_myawesomeappexamplemodel.py**: Tests for models.
+    - **test_views.py**: Tests for views.
+  - **urls.py**: URL routing for the app.
+  - **views.py**: View functions or classes for the app.
 
-**invoke.example.yml**：Invoke 任务的示例配置。
+- **poetry.lock**: Lock file for Poetry dependency manager.
+- **pyproject.toml**: Configuration file for Poetry and other tools.
+- **README.md**: Readme file for the project.
+- **tasks.py**: Task definitions for Invoke.
 
-**invoke.mysql.yml**：使用 MySQL 时的 Invoke 任务配置。
+Understanding the files' purposes is the first step in working with them. Congratulations on taking that first step! 
 
-**LICENSE**：项目开源许可证文件。
+Believe it or not, our newly created app is a valid app that can be distributed. In the next two days, we will see how we can pack and distribute the app. 
 
-**mkdocs.yml**：MkDocs 文档生成工具的配置文件。
+## Day 43 To Do
 
-**my_awesome_app**：应用主目录。
-- **api/**：API 实现，包含序列化器、URL 路由和视图。
-- **app-config-schema.json**：应用配置的 JSON Schema。
-- **filters.py**：自定义过滤器。
-- **forms.py**：Django 表单定义。
-- **migrations/**：数据库迁移文件。
-- **models.py**：数据库模型定义。
-- **navigation.py**：导航菜单配置。
-- **tables.py**：自定义表格。
-- **templates/**：HTML 模板文件。
-- **tests/**：测试用例，涵盖 API、视图、模型、表单、过滤器等各层的测试。
-- **urls.py**：URL 路由配置。
-- **views.py**：视图函数或视图类定义。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-**poetry.lock**：Poetry 依赖管理器的锁定文件，确保依赖版本一致。
+Go ahead and post a screenshot of a new app structure that you have installed for today's challenge, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-**pyproject.toml**：Poetry 及其他工具的项目配置文件。
-
-**README.md**：项目说明文档。
-
-**tasks.py**：Invoke 的任务定义文件。
-
----
-
-理解每个文件的职责，是着手开发的第一步。恭喜你迈出了这一步！
-
-说来也许出乎意料——我们刚刚生成的 App 已经是一个完整可发布的应用了。接下来的两天，我们将着手了解如何打包和分发它。
-
-## 第 43 天待办事项
-
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
-
-请在你选择的社交媒体上发布今天查看的 App 目录结构截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
-
-明天的挑战，我们将正式开启 App 的发布之旅。明天见！
+In tomorrow's challenge, we start the process of distributing our newly created app. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+43+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 43 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 43 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 

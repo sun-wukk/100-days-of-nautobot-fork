@@ -1,21 +1,22 @@
-# 了解 Job 数据模型
+# Getting to Know Job Models 
 
-在前几天的挑战中，即使重启容器后，我们仍然能够查看 Nautobot Jobs 的执行结果。这说明结果数据被持久化存储在了数据模型的永久存储位置中。
+In previous days, we have been able to execute Nautobot jobs and observe the results even when we restarted the containers. This, of course, means the results data persisted in a permanent storage location in a data model. 
 
-Job 数据模型提供了描述 Job 元数据的数据库表示，同时也是存储 Job 执行结果的地方。
+Job models provide a database representation of metadata describing the jobs. It also provides a place to hold the job results. 
 
 [https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/jobs/models/](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/jobs/models/)
 
-在今天的挑战中，我们将快速浏览 Job 数据模型的各个方面。今天的动手实践内容较少，更多的是"知道它在哪里"，以便在需要时能找到更多信息。
+For today's challenge, we will do a quick walk through of the different aspects of Job data models. There is less hands-on exercise today, but more in terms 'just know where it is' to know where to look for more information when needed. 
 
-## 环境配置
+## Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
 
 > [!TIP]
-> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。如果已有实例在运行，只需启动 Poetry 环境并执行 `invoke debug` 即可。
+> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. Remember you only need to start poetry shell and `invoke debug` if you already have an instance running. 
 
-按照以下步骤启动 Nautobot：
+We will follow the same steps to start Nautobot: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -24,30 +25,31 @@ $ invoke db-import
 $ invoke debug
 ```
 
-今天挑战的环境已配置完毕。
+The environment is now setup for today's challenge.  
 
-## Job 数据模型
+## Job Models
 
-Job 的数据库表示位于 Job 数据模型中。Job 数据模型同时也是 JobResult、ScheduledJob 等其他数据模型的锚点。
+The database representation of Jobs is in the Job data model. The Job data model is also the anchor point for other data models such as JobResult and ScheduledJob. 
 
-> [!TIP]
-> 查阅 [Job 数据模型文档](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/jobs/models/) 了解更多信息。
+>[!TIP]
+> Check out [Job Models documention](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/jobs/models/) for more information.
 
-如下所示，我们可以在 UI 中修改 Job 的各项属性，例如名称或分组：
+As we can see, we can change aspects of the Jobs in the UI, such as the name or grouping: 
 
 ![job_model_1](images/job_model_1.png)
 
-也可以覆盖 Job 的多个属性：
+We can also override a number of Jobs properties: 
 
 ![job_model_2](images/job_model_2.png)
 
-回想一下，我们在 Job 审批挑战中已经尝试过覆盖"需要审批"属性。
+If you recall, we already tried out the 'Approval required' override for the Job approval challenge. 
 
-另一个有时需要调整的选项是 Job 执行的"时间限制"。我们知道，有时网络设备响应较慢，或者 Job 需要处理大量设备，适当调整时间限制可以作为一种临时解决方案来确保 Job 正常执行。
+Another area that sometimes require tweaking is the 'Time limit' for job execution. As we know, sometimes we have slow network devices or simply have large quantity of devices for a job to execute, tweaking the time limit might be a short term solution to allow the job to execute. 
 
 ## Nautobot Shell
 
-我们也可以通过 Nautobot Shell 来查看数据模型：
+We can also invoke Nautobot shell to take a look at the data models: 
+
 ```
 $ invoke nbshell
 ...
@@ -103,18 +105,18 @@ j1.get_computed_fields(                     j1.job_results(                     
 >>>
 ```
 
-今天的挑战侧重于 Nautobot Job 数据模型的背景知识，而非动手实践。作为初学者，我们应该对修改未直接暴露给我们的核心数据模型保持谨慎。
+Today's challenge focuses heavily on background knowledge of Nautobot Job models rather than hands-on practice. As a beginner, we should be a bit cautious about modifying any core Data models that is not exposed to us. 
 
-随着我们对 Nautobot Jobs 的逐渐熟悉，在排查问题时可能需要重新审视这些字段。
+As we become more familiar with Nautobot jobs, we might need to revisit some of these fields during troubleshooting. 
 
-## 第 19 天待办事项
+## Day 19 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布您对 Job 数据模型执行的任意 `queryset` 截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of a `queryset` of your choice for the Job data model on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将了解单一事实来源（SSoT）应用与 DiffSync 库。明天见！
+In tomorrow's challenge, we will take a look at the Single Source of Truth (SSoT) app and the DiffSync library. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+19+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 19 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 19 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

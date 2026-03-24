@@ -1,41 +1,42 @@
-# 设计未来站点（第五部分）
+# Design Future Sites (Part 5)
 
-好的，第五部分开始！
+Alright, Part 5 here we go! 
 
-## 从第 37 天停下的地方继续
+## Let's continue from where we left off on Day 37
 
-✅ 第 36 天：
+✅ Day 36:
 
-    ✅ 创建关联关系
+    ✅ Create relationships
 
-    ✅ 创建站点
+    ✅ Create the site  
 
-    ✅ 分配 /16 前缀
-
-
-✅ 第 37 天：
-
-    ✅ 为每个角色创建并分配前缀
-
-    ✅ 创建机架
-
-    ✅ 建立机架与 VLAN 的关联关系
+    ✅ Assign a /16 prefix  
 
 
-✅ 第 38 天：
-- [ ] 创建设备
-- [ ] 为关键接口分配 VLAN 和 IP
-- [ ] 建立设备与 VLAN 的关联关系
+✅ Day 37:
 
-✅ 第 39 天：
-- [ ] 将线路连接到边缘设备
-- [ ] 设备间布线
+    ✅ Create roles and assign prefixes for each role  
 
-🔥 胜利就在眼前！冲吧！
+    ✅ Create racks
 
-## 设计未来站点第五部分代码
+    ✅ Establish rack and VLAN relationships 
 
-如果您需要重新创建 Codespace 实例，请确保重新创建前一天挑战中的文件。
+
+✅ Day 38:
+- [ ] Create devices  
+- [ ] Assign VLANs and IPs to critical interfaces  
+- [ ] Establish device and VLAN relationships  
+
+✅ Day 39:
+- [ ] Connect circuits to edge devices
+- [ ] Cabling devices together 
+
+🔥 We are almost there! Let's get after it!
+
+## Design Future Sites Part 5 Code
+
+If you had to create a new codespace instance make sure you recreate the file from the previous challenge.
+
 ```shell
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -45,13 +46,15 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch create_site_job.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot create_site_job.py
 ```
 
-## 操作步骤
+## Walkthrough
 
-与前几天一样，我们从添加必要的导入语句开始。今天没有新的变量需要声明，但我们会使用现有的 `DEVICE_ROLES` 嵌套字典来确定创建设备时所需的属性，值得再次回顾一下。
+Just like the previous days, we'll start by adding the necessary imports statements. There are no new variables to declare today, but we will be using the existing ```DEVICE_ROLES``` nested dictionary to determine the required attributes as we create devices. It's worth revisiting this for reference.
 
 > [!TIP]
-> 还记得第 36 天的网络驱动映射步骤吗？这里 `"platform"` 非常关键。如果 Job 失败，请检查映射中是否设置了 `"arista_eos"`。
+> Remember the network mapping step in Day 36? This is where the ```"platform"``` is critical. If the job fails, double check you have ```"arista_eos"``` in your mapping.
+
 ```python
+
 from nautobot.dcim.models.device_components import Interface
 from nautobot.dcim.choices import RackTypeChoices, InterfaceTypeChoices
 from nautobot.ipam.models import Prefix, VLAN, IPAddress
@@ -81,16 +84,19 @@ DEVICE_ROLES = {
         ],
     },
 }
+
 ```
 
-今天的任务将把前几天的元素整合在一起，并引入新的内容。让我们逐节拆解。
+For today's tasks, we will tie together elements from previous days and introduce new ones. Let's breakdown each section.
 
-首先，我们遍历已创建的机架，然后迭代 `DEVICE_ROLES` 中定义的数据，目标是在每个机架中按顺序系统性地创建 `"edge"` 和 `"leaf"` 设备。
+First, we'll loop through the racks we created, then iterate through the data defined in ```DEVICE_ROLES```. Our goal is to systematically create ```"edge"``` and ```"leaf"``` devices inside each rack in a sequential manner.
 
-还记得昨天创建机架时的全局计数器吗？它用于跟踪机架和设备的编号。此外，我们递增 `"position"` 以确保设备安装在唯一的插槽中。
+Remember the global counters from Rack Creation yesterday? This helps track our rack and device numbering. Additionally, we increment the ```"position"``` to ensure devices are installed in unique slots.
+
 ```python
+
         # ----------------------------------------------------------------------------
-        # 创建设备
+        # Create Devices
         # ----------------------------------------------------------------------------
         self.devices = {}
         for rack in racks:  
@@ -103,7 +109,7 @@ DEVICE_ROLES = {
                 device_role.validated_save()
                 self.logger.info(f"Created '{device_role}'")
 
-                # 本机架中第一台设备的起始位置
+                # Start position for the first device in this rack
                 position = data.get("rack_elevation", 1)
                 num_devices = data.get("per_rack") 
 
@@ -127,22 +133,25 @@ DEVICE_ROLES = {
                     device_obj.save()
                     self.logger.info(f"Device {device_name} successfully created in {rack.name}")
 
-                    # 将设备保存到清单中，供后续布线使用
+                    # Save the device in our inventory for later cabling
                     self.devices[device_obj.name] = device_obj
 
                     position += 1
                     global_device_counter[role] += 1
+
 ```
 
-接下来，我们在 `for` 循环中为每台创建的设备添加以下属性：
+Next, we want to create the following items. Doing this within the ```for``` loop ensures that each device created are getting these attributes:
 
-1. 从"loopback"前缀中找到第一个可用 IP 地址。
-2. 基于该 IP 地址创建一个 IP 地址对象。
-3. 在当前设备上创建 Loopback0 接口。
-4. 将 IP 地址分配给创建的 Loopback 接口。
-5. 将 Loopback0 的 IP 设置为设备的主 IPv4 地址，用于管理。
+1. Find the first useable IP Address from the "loopback" prefix. 
+2. Create an IP Address based on this IP Address.
+3. Create a Loopback0 interface on the current device.
+4. Assign the IP Address to the created Loopback .
+5. Assign the Loopback0 IP as the Primary IPv4 address of the device for management purposes.
+
 ```python
-                    # 分配 Loopback IP
+
+                    # Assign Loopback IP
                     loopback_prefix = Prefix.objects.get(
                         location=self.site,
                         role=loopback_role,
@@ -161,7 +170,7 @@ DEVICE_ROLES = {
                         dns_name=f"{role}-{global_device_counter[role]:02}.{site_code}.{tenant.description}"
                     )
 
-                    loopback_ip.mask_length = 32  # L0 子网以 /32 分配，而非 /18
+                    loopback_ip.mask_length = 32  # L0 subnets assigned as /32 instead of /18
                     loopback_ip.save()
 
                     loopback_intf, _ = Interface.objects.get_or_create(
@@ -174,12 +183,12 @@ DEVICE_ROLES = {
                     loopback_intf.ip_addresses.add(loopback_ip)
                     loopback_intf.save()
                     
-                    # 将 L0 IP 设置为设备的主 IPv4
+                    # Assign L0 IP as primary IPv4 for device
                     device_obj.primary_ip4 = loopback_ip
                     device_obj.save()
                     self.logger.info(f"Created '{loopback_intf}' with '{loopback_ip}' and assigned to {device_name} as primary IP")
 
-                    # 为接口分配角色
+                    # Assign Role to Interfaces
                     intfs = iter(Interface.objects.filter(device=device_obj))
                     for int_role, cnt in data.get("interfaces", []):
                         for _ in range(cnt):
@@ -189,14 +198,15 @@ DEVICE_ROLES = {
                                 intf.save()
 ```
 
-在生产环境中，VLAN 通常存在于交换机（leaf）上。如果分配的角色为 `"leaf"`，以下部分将为设备创建对应属性：
+We typically find VLANs in switches (leaf) in production environments. This section ensures the following attributes are also created for the device if the assigned role is ```"leaf"```.
 
-1. 查询分配给 VLAN 角色的前缀（应为 /18）。
-2. 从 /18 角色前缀中创建更小的 /24 子网，并设置类型为"pool"。
-3. 从指定角色（"server"或"mgmt"）中找到第一个可用 IP 地址。
-4. 在交换机上创建 VLAN 接口并分配 IP 地址。
+1. Query for prefix assigned to the VLAN role (should be a /18). 
+2. Create smaller /24 subnets from the /18 role prefix and assign as "pool".
+3. Find the first available IP Address from the role specified ("server" or "mgmt").
+4. Create a VLAN interface on the switch and assign an IP Address. 
+
 ```python
-                    # 为 leaf 设备分配 VLAN
+                    # VLAN Assignment for leaf devices
                     if role == "leaf":
                         for vlan_name, vlan_id in VLAN_INFO.items():                            
                             vlan_role = Role.objects.get(name=vlan_name)
@@ -207,7 +217,7 @@ DEVICE_ROLES = {
                                 role=vlan_role,
                             ).first()
                         
-                            # 找到当前 VLAN 角色（server 或 mgmt）的下一个可用网络
+                            # Find Next available Network for the current vlan role i.e. server or mgmt
                             first_avail = vlan_block.get_first_available_prefix()
                             subnet = list(first_avail.subnet(24))[0]
                             vlan_prefix, created = Prefix.objects.get_or_create(
@@ -220,7 +230,7 @@ DEVICE_ROLES = {
                                 vlan=VLAN.objects.get(name=vlan_role)                                
                             )
                             
-                            # 在 VLAN 接口上创建 IP 地址
+                            # Create IP Addresses on VLAN Interface
                             vlan_ip, created = IPAddress.objects.get_or_create(
                                 address=str(subnet[0]),
                                 status=ACTIVE_STATUS,
@@ -237,12 +247,15 @@ DEVICE_ROLES = {
                             )
                             intf.ip_addresses.add(vlan_ip)
                             intf.save()
+
 ```
 
-最后，在 `for` 循环结束时，确保每台设备都关联了正确的 VLAN 和机架分配。
+Lastly, we want to make sure that at the end of the ```for``` loop, each device is associated with the correct VLANs and rack assignment.
+
 ```python
+
                             # -----------------------------------------------------------------------
-                            # 将 mgmt 和 server VLAN 与设备关联
+                            # Associate the mgmt and server VLANs with the device
                             # -----------------------------------------------------------------------
                             RelationshipAssociation.objects.get_or_create(
                                 relationship=rel_device_vlan,
@@ -258,11 +271,15 @@ DEVICE_ROLES = {
                                 destination_type=ContentType.objects.get_for_model(VLAN),
                                 destination_id=server_vlan.id
                             )
+
 ```
 
-## 第 38 天最终代码
+
+## Final Day 38 Code
+
 ```python
-"""用于创建 POP 类型新站点的 Job。"""
+
+"""Job to create a new site of type POP."""
 
 from itertools import product
 import re
@@ -278,18 +295,18 @@ from nautobot.tenancy.models import Tenant
 from nautobot.extras.models.customfields import CustomField
 from nautobot.dcim.models.device_components import Interface
 
-####第36天####
+####DAY36####
 from nautobot.apps.jobs import Job, ObjectVar, StringVar, register_jobs
 from nautobot.dcim.models.locations import Location, LocationType
 from ipaddress import IPv4Network
 from nautobot.extras.models.relationships import Relationship, RelationshipAssociation
 from nautobot.extras.choices import RelationshipTypeChoices
 
-####第37天####
+####DAY37####
 from nautobot.dcim.models.racks import Rack
 from nautobot.dcim.choices import RackTypeChoices
 
-####第38天####
+####DAY38####
 from nautobot.dcim.models.device_components import Interface
 from nautobot.dcim.choices import RackTypeChoices, InterfaceTypeChoices
 from nautobot.ipam.models import Prefix, VLAN, IPAddress
@@ -302,7 +319,7 @@ name = "Data Population Jobs Collection"
 PREFIX_ROLES = ["p2p", "loopback", "server", "mgmt", "pop"]
 TENANT_NAME = "Data Center"
 ACTIVE_STATUS = Status.objects.get(name="Active")
-# VLAN 定义：键名同时用于查找对应角色
+# VLAN definitions: key is also used to look up the role.
 VLAN_INFO = {
     "server": 1000,
     "mgmt": 99,
@@ -310,11 +327,12 @@ VLAN_INFO = {
 CUSTOM_FIELDS = {
     "role": {"models": [Interface], "label": "Role"},
 }
-# 获取 Prefix 和 VLAN 模型的内容类型
+# Retrieve the content type for Prefix and VLAN models.
+
 prefix_ct = ContentType.objects.get_for_model(Prefix)
 vlan_ct = ContentType.objects.get_for_model(VLAN)
 
-####第35天####
+####DAY35####
 DEVICE_TYPES_YAML = [
     """
     manufacturer: Arista
@@ -346,10 +364,10 @@ DEVICE_TYPES_YAML = [
     """,
 ]
 
-####第36天####
+####DAY36####
 POP_PREFIX_SIZE = 16
 
-####第37天####
+####DAY37####
 ROLE_PREFIX_SIZE = 18
 RACK_HEIGHT = 48
 RACK_WIDTH = 19
@@ -382,28 +400,30 @@ DEVICE_ROLES = {
 
 
 def create_prefix_roles(logger):
-    """创建 PREFIX_ROLES 中定义的所有前缀角色，并为其添加 IPAM Prefix 和 VLAN 的内容类型。"""
+    """Create all Prefix Roles defined in PREFIX_ROLES and add content types for IPAM Prefix and VLAN."""
 
+    # Retrieve the content type for Prefix and VLAN models.
     for role in PREFIX_ROLES:
         role_obj, created = Role.objects.get_or_create(name=role)
-        # 为角色添加 Prefix 和 VLAN 内容类型
+        # Add the Prefix and VLAN content types to the role.
         role_obj.content_types.add(prefix_ct, vlan_ct)
         role_obj.validated_save()
         logger.info(f"Successfully created role {role} with content types for Prefix and VLAN.")
 
 
 def create_tenant(logger):
-    """使用 TENANT_NAME 定义的名称创建租户。"""
+    """Create a tenant with the name defined in TENANT_NAME."""
     tenant_obj, _ = Tenant.objects.get_or_create(name=TENANT_NAME)
     tenant_obj.validated_save()
     logger.info(f"Successfully created Tenant {TENANT_NAME}.")
 
 
 def create_vlans(logger):
-    """创建 VLAN_INFO 中定义的预设 VLAN，并分配相应角色。"""
+    """Create predefined VLANs defined in VLAN_INFO, and assign the appropriate role."""
+    # Get the active status from the database.
 
     for vlan_name, vlan_id in VLAN_INFO.items():
-        # 根据 VLAN 名称获取对应角色
+        # Retrieve the appropriate role based on the VLAN name.
         try:
             role_obj = Role.objects.get(name=vlan_name)
         except Role.DoesNotExist:
@@ -425,7 +445,7 @@ def create_vlans(logger):
             logger.info(f"VLAN '{vlan_name}' with ID {vlan_id} already exists.")
 
 def create_custom_fields(logger):
-    """创建 CUSTOM_FIELDS 中定义的所有关联关系。"""
+    """Create all relationships defined in CUSTOM_FIELDS."""
     for cf_name, field in CUSTOM_FIELDS.items():
         try:
             cf = CustomField.objects.get(key=cf_name)
@@ -443,7 +463,7 @@ def create_custom_fields(logger):
 
 def create_device_types(logger):
     """
-    从 YAML 定义创建 DeviceType 对象，并使用 InterfaceTemplate 添加接口。
+    Create DeviceType objects from YAML definitions and add interfaces using InterfaceTemplate.
     """
 
     for device_yaml in DEVICE_TYPES_YAML:
@@ -460,7 +480,7 @@ def create_device_types(logger):
             logger.error("Model not provided in YAML for manufacturer %s", manufacturer_name)
             continue
 
-        # 创建 DeviceType
+        # Create DeviceType
         device_type_defaults = {
             k: data[k] for k in ["part_number", "u_height", "is_full_depth", "comments"] if k in data
         }
@@ -476,7 +496,7 @@ def create_device_types(logger):
         else:
             logger.info(f"DeviceType already exists: {device_type_obj}")
 
-        # 使用 InterfaceTemplate 添加接口
+        # Add interfaces using InterfaceTemplate
         for iface in data.get("interfaces", []):
             pattern = iface.get("pattern")
             iface_type = iface.get("type")
@@ -486,7 +506,7 @@ def create_device_types(logger):
                 logger.error(f"Invalid interface definition in {model_name}: {iface}")
                 continue
 
-            # 从范围模式生成接口名称
+            # Generate interfaces from range patterns
             interface_names = expand_interface_pattern(pattern)
             for iface_name in interface_names:
                 interface_template, created = InterfaceTemplate.objects.get_or_create(
@@ -503,19 +523,19 @@ def create_device_types(logger):
 
 def expand_interface_pattern(pattern):
     """
-    将接口模式（如 'Ethernet[1-60]/[1-4]'）展开为实际接口名称列表。
-    支持以下格式：
-      - 单一范围：Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
-      - 嵌套范围：Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
+    Expands an interface pattern like 'Ethernet[1-60]/[1-4]' into actual names.
+    Supports:
+      - Single range: Ethernet[1-24] -> Ethernet1, Ethernet2, ..., Ethernet24
+      - Nested range: Ethernet[1-60]/[1-4] -> Ethernet1/1, Ethernet1/2, ..., Ethernet60/4
     """
     match = re.findall(r"\[([0-9]+)-([0-9]+)\]", pattern)
     if not match:
-        return [pattern]  # 无需展开，直接返回
+        return [pattern]  # No expansion needed, return as-is.
 
-    # 转换为数字列表
+    # Convert to lists of numbers
     ranges = [list(range(int(start), int(end) + 1)) for start, end in match]
 
-    # 使用笛卡尔积生成名称
+    # Generate names using cartesian product
     expanded_names = []
     base_name = re.sub(r"\[[0-9]+-[0-9]+\]", "{}", pattern)
 
@@ -524,7 +544,7 @@ def expand_interface_pattern(pattern):
 
     return expanded_names
 
-####第37天####
+####DAY37####
 def get_or_create_relationship(label, key, source_model, destination_model, rel_type):
     try:
         rel, created = Relationship.objects.get_or_create(
@@ -539,17 +559,17 @@ def get_or_create_relationship(label, key, source_model, destination_model, rel_
         return rel
     except Exception as e:
         self.logger.error(f"Error creating relationship {label}: {e}")
-        return Relationship.objects.get(key=key)  # 回退到已存在的关联关系
+        return Relationship.objects.get(key=key)  # Fallback to existing relationship
 
 
 class CreatePop(Job):
-    """用于创建 POP 类型新站点的 Job。"""
+    """Job to create a new site of type POP."""
     
-    ####第36天####
-    # 接收用户输入的站点信息
+    ####DAY36####
+    # Receive input from user about site iformation
     location_type = ObjectVar(
-        model=LocationType,
-        description = "Select location type for new site."
+    model=LocationType,
+    description = "Select location type for new site."
     )
     parent_site = ObjectVar(
         model=Location,
@@ -563,28 +583,30 @@ class CreatePop(Job):
     site_code = StringVar(description="Enter Site Code as 2-letter state and 2-digit site ID e.g. NY01 for New York Store ID 01")
     tenant = ObjectVar(model=Tenant)
 
+
     class Meta:
-        """CreatePop 的元数据。"""
+        """Metadata for CreatePop."""
 
         name = "Create a Point of Presence"
         description = """
         Create a new POP Site.
         A new /16 will automatically be allocated from the 'POP Global Pool' Prefix.
         """    
-    ####第36天####    
+    ####DAY36####    
     def run(self, location_type, site_name, site_facility, tenant, site_code, parent_site=None):
-        """创建站点的主函数。"""
+        """Main function to create a site."""
         # ----------------------------------------------------------------------------
-        # 使用所有必需对象初始化数据库
+        # Initialize the database with all required objects.
+        # We will build on this in the coming days.
         # ----------------------------------------------------------------------------
         create_prefix_roles(self.logger)
         create_tenant(self.logger)
         create_vlans(self.logger)
         create_device_types(self.logger)
 
-        ####第37天####
+        ####DAY37####
         # ----------------------------------------------------------------------------
-        # 创建关联关系
+        # Create Relationships
         # ----------------------------------------------------------------------------
         rel_device_vlan = get_or_create_relationship(
             "Device to VLAN", "device_to_vlan", Device, VLAN, RelationshipTypeChoices.TYPE_MANY_TO_MANY
@@ -593,9 +615,9 @@ class CreatePop(Job):
             "Rack to VLAN", "rack_to_vlan", Rack, VLAN, RelationshipTypeChoices.TYPE_MANY_TO_MANY
         )
 
-        ####第36天####
+        ####DAY36####
         # ----------------------------------------------------------------------------
-        # 创建站点
+        # Create Site
         # ----------------------------------------------------------------------------
         location_type_site, _ = LocationType.objects.get_or_create(name=location_type)
         self.site_name = site_name
@@ -605,7 +627,7 @@ class CreatePop(Job):
             location_type=LocationType.objects.get(name=location_type),
             facility=site_facility,
             status=ACTIVE_STATUS,
-            parent=parent_site,  # 如果未提供则为 None
+            parent=parent_site,  # Will be None if not provided
             tenant=tenant
         )
         
@@ -620,10 +642,10 @@ class CreatePop(Job):
             self.logger.info(f"Assigning '{site_name}' as '{pop_role}' role.")
 
             # ----------------------------------------------------------------------------
-            # 为此 POP 分配前缀
+            # Allocate Prefix for this POP
             # ----------------------------------------------------------------------------
         
-            # 查找第一个尚未分配给站点的可用 /16 前缀
+            # Find the first available /16 prefix that isn't assigned to a site yet
             pop_prefix = Prefix.objects.filter(
                 type="container",
                 prefix_length=POP_PREFIX_SIZE,
@@ -643,13 +665,13 @@ class CreatePop(Job):
                     prefix_length=8
                 ).first()
 
-                # 获取 /8 内的第一个可用前缀
+                # Get the first available prefix within the /8
                 first_avail = top_level_prefix.get_first_available_prefix()
 
                 if not first_avail:
                     raise Exception("No available subnets found within the /8 prefix.")
 
-                # 遍历 /8 内所有可能的 /16 子网，找到第一个未分配的
+                # Iterate over all possible /16 subnets within the /8 and find the first unassigned one
                 for candidate_prefix in IPv4Network(str(first_avail)).subnets(new_prefix=POP_PREFIX_SIZE):
                     if not Prefix.objects.filter(prefix=str(candidate_prefix)).exists():
                         pop_prefix, created = Prefix.objects.get_or_create(
@@ -667,9 +689,9 @@ class CreatePop(Job):
         else:
             self.logger.warning(f"Site '{site_name}' already exists.") 
 
-        ####第37天####
+        ####DAY37####
         # ----------------------------------------------------------------------------
-        # 在 POP 中创建前缀并分配角色
+        # Create and assign prefixes to roles in POP
         # ----------------------------------------------------------------------------
         
         site_subnets = IPv4Network(str(pop_prefix)).subnets(new_prefix=ROLE_PREFIX_SIZE)
@@ -678,7 +700,7 @@ class CreatePop(Job):
         loopback_subnet = next(site_subnets)
         p2p_subnet = next(site_subnets)
 
-        # 为各角色分配新子网
+        # Assign new subnets to roles
         server_role = Role.objects.get(name="server")
         server_prefix, created = Prefix.objects.get_or_create(
             prefix=str(server_subnet),
@@ -730,14 +752,14 @@ class CreatePop(Job):
         self.logger.info(f"'{p2p_prefix}' assigned to '{p2p_role}'.") 
 
         # ----------------------------------------------------------------------------
-        # 创建机架
+        # Create Racks
         # ----------------------------------------------------------------------------
-        # 初始化全局计数器
-        global_device_counter = {role: 1 for role in DEVICE_ROLES}  # 用于跟踪编号
-        racks = []  # 存储已创建的机架以便后续迭代
+        # Initialize global counters
+        global_device_counter = {role: 1 for role in DEVICE_ROLES}  # Keeps track of numbering
+        racks = []  # Store created racks so we can iterate later        
 
-        # 创建机架
-        num_rack = 2  # 如果站点需要超过 2 个机架，可将此改为输入变量
+        # Create racks
+        num_rack = 2 # We can modify this to be an input variable if a site needs more than 2
         for num in range(1, num_rack + 1):
             rack_name = f"{site_code.upper()}-{100 + num}"
             rack, created = Rack.objects.get_or_create(
@@ -753,7 +775,7 @@ class CreatePop(Job):
             self.logger.info(f"Successfully created {rack_name}.")
 
         # ---------------------------------------------------------------------------
-        # 将 mgmt 和 server VLAN 与每个机架关联
+        # Associate the mgmt and server VLANs with each rack
         # ---------------------------------------------------------------------------
         mgmt_vlan = VLAN.objects.get(name="mgmt")
         server_vlan = VLAN.objects.get(name="server")
@@ -774,7 +796,7 @@ class CreatePop(Job):
             )
 
         # ----------------------------------------------------------------------------
-        # 创建设备
+        # Create Devices
         # ----------------------------------------------------------------------------
         self.devices = {}
         for rack in racks:  
@@ -787,7 +809,7 @@ class CreatePop(Job):
                 device_role.validated_save()
                 self.logger.info(f"Created '{device_role}'")
 
-                # 本机架中第一台设备的起始位置
+                # Start position for the first device in this rack
                 position = data.get("rack_elevation", 1)
                 num_devices = data.get("per_rack") 
 
@@ -811,13 +833,13 @@ class CreatePop(Job):
                     device_obj.save()
                     self.logger.info(f"Device {device_name} successfully created in {rack.name}")
 
-                    # 将设备保存到清单中，供后续布线使用
+                    # Save the device in our inventory for later cabling
                     self.devices[device_obj.name] = device_obj
 
                     position += 1
                     global_device_counter[role] += 1
         
-                    # 分配 Loopback IP
+                    # Assign Loopback IP
                     loopback_prefix = Prefix.objects.get(
                         location=self.site,
                         role=loopback_role,
@@ -836,7 +858,7 @@ class CreatePop(Job):
                         dns_name=f"{role}-{global_device_counter[role]:02}.{site_code}.{tenant.description}"
                     )
 
-                    loopback_ip.mask_length = 32  # L0 子网以 /32 分配，而非 /18
+                    loopback_ip.mask_length = 32  # L0 subnets assigned as /32 instead of /18
                     loopback_ip.save()
 
                     loopback_intf, _ = Interface.objects.get_or_create(
@@ -849,12 +871,12 @@ class CreatePop(Job):
                     loopback_intf.ip_addresses.add(loopback_ip)
                     loopback_intf.save()
                     
-                    # 将 L0 IP 设置为设备的主 IPv4
+                    # Assign L0 IP as primary IPv4 for device
                     device_obj.primary_ip4 = loopback_ip
                     device_obj.save()
                     self.logger.info(f"Created '{loopback_intf}' with '{loopback_ip}' and assigned to {device_name} as primary IP")
 
-                    # 为接口分配角色
+                    # Assign Role to Interfaces
                     intfs = iter(Interface.objects.filter(device=device_obj))
                     for int_role, cnt in data.get("interfaces", []):
                         for _ in range(cnt):
@@ -863,7 +885,7 @@ class CreatePop(Job):
                                 intf._custom_field_data = {"role": int_role}
                                 intf.save()
                     
-                    # 为 leaf 设备分配 VLAN
+                    # VLAN Assignment for leaf devices
                     if role == "leaf":
                         for vlan_name, vlan_id in VLAN_INFO.items():                            
                             vlan_role = Role.objects.get(name=vlan_name)
@@ -874,7 +896,7 @@ class CreatePop(Job):
                                 role=vlan_role,
                             ).first()
                         
-                            # 找到当前 VLAN 角色（server 或 mgmt）的下一个可用网络
+                            # Find Next available Network for the current vlan role i.e. server or mgmt
                             first_avail = vlan_block.get_first_available_prefix()
                             subnet = list(first_avail.subnet(24))[0]
                             vlan_prefix, created = Prefix.objects.get_or_create(
@@ -887,7 +909,7 @@ class CreatePop(Job):
                                 vlan=VLAN.objects.get(name=vlan_role)                                
                             )
                             
-                            # 在 VLAN 接口上创建 IP 地址
+                            # Create IP Addresses on VLAN Interface
                             vlan_ip, created = IPAddress.objects.get_or_create(
                                 address=str(subnet[0]),
                                 status=ACTIVE_STATUS,
@@ -906,7 +928,7 @@ class CreatePop(Job):
                             intf.save()
 
                             # -----------------------------------------------------------------------
-                            # 将 mgmt 和 server VLAN 与设备关联
+                            # Associate the mgmt and server VLANs with the device
                             # -----------------------------------------------------------------------
                             RelationshipAssociation.objects.get_or_create(
                                 relationship=rel_device_vlan,
@@ -924,83 +946,85 @@ class CreatePop(Job):
                             )
 
 register_jobs(CreatePop)
+
+
 ```
 
-🚀 现在可以创建设备了！🚀
+🚀 Now we are ready to create devices!🚀 
 
 ![Create Site Day 38](images/create_site_day38_1.png)
 
-Job 完成后，让我们验证各项结果，确认执行无误！
+Once the Job completes, let's verify elements of our job to make sure that it executed properly!
 
-前往"LOCATIONS -> Racks"验证机架和设备是否按预期创建。预期结果是 `{site_code}-101` 机架中应包含 edge-01 和 leaf-01 至 03 设备。
+Head over to "LOCATIONS->Racks" to verify if racks and devices are created how we want it. What we want to see is rack {site_code}-101 should house edge-01 and leaf-01 to 03 devices.
 
 ![Created Site Racks](images/create_site_day38_2.png)
 
-`{site_code}-102` 机架中应包含 edge-02 和 leaf-04 至 06 设备。
+Subsequently, rack {site_code}102 should house edge-02 and leaf-04 to 06 devices.
 
 ![Created Site Racks](images/create_site_day38_3.png)
 
-前缀情况如何？
+What about our prefixes?
 
-可以看到，前缀已正确创建为带有所有正确属性的 /24 "pool"子网。
+Here we can see that they are properly created as a /24 "pool" subnet with all the proper attributes.
 
 ![Created Prefixes](images/create_site_day38_4.png)
 
-检查设备，确认其具有所有预期属性。
+Let's check our devices to make sure it has all the attributes we want.
 
 ![List Devices](images/create_site_day38_5.png)
 
-点击其中一台设备，验证 Loopback0 IP、主 IPv4、角色、平台等关键信息。
+Click on one of them to verify key information such as Loopback0 IP, Primary IPv4, role, platform, etc.
 
 ![Device Details](images/create_site_day38_6.png)
 
-最后，确认每台设备的 VLAN 关联正确。在设备详情页向下滚动至 Relationships -> VLANs，应该能看到两个关联条目。
+Lastly, we want to make sure all the VLAN association per device is correct. While on the device screen, scroll down to Relationships->VLANs and you should see both associations in there.
 
 ![Device to VLAN](images/create_site_day38_7.png)
 
-## 回顾
+## Recap
 
-看到这些绿色的勾选标记，成就感油然而生！今天的内容确实很多，但绝对值得！
+Seeing all these green check marks gives us the awesome sense of accomplishment! That was a lot for today but it's definitely worth it!
 
-✅ 第 36 天：
+✅ Day 36:
 
-    ✅ 创建关联关系
+    ✅ Create relationships
 
-    ✅ 创建站点
+    ✅ Create the site  
 
-    ✅ 分配 /16 前缀
-
-
-✅ 第 37 天：
-
-    ✅ 为每个角色创建并分配前缀
-
-    ✅ 创建机架
-
-    ✅ 建立机架与 VLAN 的关联关系
+    ✅ Assign a /16 prefix  
 
 
-✅ 第 38 天：
+✅ Day 37:
 
-    ✅ 创建设备
+    ✅ Create roles and assign prefixes for each role  
 
-    ✅ 为关键接口分配 VLAN 和 IP
+    ✅ Create racks
 
-    ✅ 建立设备与 VLAN 的关联关系
+    ✅ Establish rack and VLAN relationships 
 
 
-✅ 第 39 天：
-- [ ] 将线路连接到边缘设备
-- [ ] 设备间布线
+✅ Day 38:
 
-## 第 38 天待办事项
+    ✅ Create devices  
+    
+    ✅ Assign VLANs and IPs to critical interfaces  
+    
+    ✅ Establish device and VLAN relationships 
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
 
-欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+✅ Day 39:
+- [ ] Connect circuits to edge devices
+- [ ] Cabling devices together 
 
-第 39 天是在 Nautobot 中构建站点的最后一天！明天见！
+## Day 38 To Do
+
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/).
+
+Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress!
+
+Final day of building a site in Nautobot for Day 39! See you tomorrow!
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+38+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 38 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 38 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

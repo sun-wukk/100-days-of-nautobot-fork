@@ -1,17 +1,18 @@
-# Job Button - 第 2 部分：接口端口重启器
+# Job Button - Part 2. Interface Port Bouncer
 
-端口重启（即将端口先关闭再开启）是网络工程师最常见的操作之一。正如我们在昨天的挑战中所提到的，我们可以将这项任务"代码化"，并通过 Nautobot Job 来执行此操作。
+Bouncing ports, or turning the port down and up, is one of the most common task a network operator needs to perform. As we indicated in yesterday's challenge, we can `codify` this task and allow this operation to be executed by a Nautobot job. 
 
-一种方式是创建一个普通 Job，利用我们已学过的技术提供菜单来选择目标设备和端口。但更好的方案是使用昨天学习的 Job Button，将其直接绑定到接口对象上。
+One way to do it is to create a regular job and provide a menu for selecting the right device and the right port using the techniques we have learned. However, a better option is to use the job button that we learned yesterday and tie it directly to the interface object. 
 
-## 环境配置
+## Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
 
 > [!TIP]
-> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。
+> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. 
 
-按照以下步骤启动 Nautobot：
+We will follow the same steps to start Nautobot: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -20,20 +21,23 @@ $ invoke db-import
 $ invoke debug
 ```
 
-上传并准备 cEOS 镜像，然后启动 Containerlab：
+Let's upload and prepare cEOS image and start Containerlab: 
+
 ```
 $ docker import cEOS64-lab-4.32.0F.tar ceos:4.32.0F
 ```
 
-本实验只需要 BOS 设备：
+For this lab we only needed the BOS devices: 
+
 ```
 $ cd clab/
 $ sudo containerlab deploy --topo ceos-lab.clab.yml --node-filter bos-acc-01,bos-rtr-01
 ```
 
-为今天的挑战创建文件，可以通过共享目录或直接在 Nautobot Docker 容器中操作，文件命名为 `port_bounce_job_button.py`：
+Let's create a file for today's challenge. We can either do this via the shared directory or directly in the Nautobot docker container, we will name this file `port_bounce_job_button.py`: 
 
 ![file_creation](images/file_creation.png)
+
 ```
 $ docker exec -u root -it nautobot_docker_compose-nautobot-1 bash
 root@c9e0fa2a45a0:/opt/nautobot# cd jobs
@@ -43,11 +47,12 @@ root@c9e0fa2a45a0:/opt/nautobot/jobs# touch port_bounce_job_button.py
 root@c9e0fa2a45a0:/opt/nautobot/jobs# chown nautobot:nautobot port_bounce_job_button.py
 ```
 
-今天挑战的环境已配置完毕。
+The environment is now setup for today's challenge.  
 
 ## Job Button Receiver
 
-与之前一样，我们需要在上一步创建的文件中编写 Receiver：
+As we have done before, we will need to create the receiver with the file from last step: 
+
 ```
 from nautobot.apps.jobs import Job, register_jobs, JobButtonReceiver
 from netmiko import ConnectHandler
@@ -55,7 +60,7 @@ from netmiko import ConnectHandler
 
 class PortBouncerButton(JobButtonReceiver):
 
-    """通过 Netmiko 和 Job Button 重启端口。"""
+    """Bounce Ports via Netmiko and Job Button."""
    
     class Meta:
         name = "Bounce Interface ports"
@@ -77,15 +82,15 @@ class PortBouncerButton(JobButtonReceiver):
             return
 
         
-        # 连接设备并获取输出 - 如果是模拟模式请注释掉此部分
+        # Connect to the device, get some output - comment this out if you are simulating
         net_connect = ConnectHandler(
             device_type=obj.device.platform.network_driver_mappings["netmiko"],
-            host=obj.device.primary_ip.host,  # 如果设备名称是 FQDN，也可以使用 device.name
+            host=obj.device.primary_ip.host,  # or device.name if your name is an FQDN
             username="admin",
             password="admin",
         )
 
-        # 平台与设备命令的简单映射
+        # Easy mapping of platform to device command
         COMMAND_MAP = {
             "cisco_nxos": [f"interface {obj}", f"shut", f"no shut"],
             "arista_eos": [f"interface {obj}", f"shut", f"no shut",],
@@ -105,55 +110,57 @@ register_jobs(
 )
 ```
 
-我们添加了几行代码，用于检查主 IP、驱动映射以及设备平台。然后使用 `netmiko` 驱动连接设备并执行命令。
+We added a few lines of command to check for primary IP, the driver mapping, as well as device platform. We then use `netmiko` driver to connect to the device and execute the commands. 
 
-注意，虽然 `cisco_nxos` 和 `arista_eos` 的端口重启命令相同，我们仍将它们分开配置。这样为将来支持使用不同命令集的其他平台预留了扩展空间。
+Note that we separate the commands between `cisco_nxos` and `arista_eos` eventhough both have the same commands for bouncing ports. This leaves room in the future for other platforms that might use different command sets. 
 
-创建 Job 后需要执行 `post-upgrade`：
+We will need to run a `post-upgrade` after creating this job: 
+
 ```
 $ invoke post-upgrade
 ```
 
-接下来将 Job Button 与 Receiver 进行关联。
+Let's wire up the job button with the receiver. 
 
-## 关联 Job Button
+## Wire Up the Job Button
 
-与 [第 12 天](../Day012_Job_Button/README.md) 相同，需要完成以下步骤：
+As we have done in [Day 12](../Day012_Job_Button/README.md), we will need to do the following: 
 
-1. 如果尚未操作，在 Jobs UI 中使用 `filter` 使 Job Button 可见。
-2. 启用该 Job。
-3. 通过 "+" 图标创建新按钮。
+1. Use `filter` in Jobs UI to make job button visible if not done so already. 
+2. Enable the Job. 
+3. Create a new button via the "+" icon. 
 
-将此 Job 与 `dcim|interface` 对象关联：
+We can associate this Job with the `dcim|interface` object: 
 
 ![job_button_1](images/job_button_1.png)
 
-现在可以进行测试了！
+We are ready to test it out! 
 
-## 测试 Job Button
+## Test the Job Button
 
-新按钮将出现在接口页面的右上角：
+The new button will appear in the top right corner on the interface page: 
 
 ![job_button_2](images/job_button_2.png)
 
-点击按钮并确认执行：
+We can click on it and confirm the execution: 
 
 ![job_button_3](images/job_button_3.png)
 
-确认后将显示查看 Job 结果的链接：
+The link to check the job results will appear after confirmation: 
 
 ![job_button_4](images/job_button_4.png)
 
-之后可以像查看普通 Job 日志一样查看执行结果。
+We will be able to check on the results as we normally would for job logs. 
 
-## 第 13 天待办事项
+## Day 13 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布新 Job 成功执行的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the successful execution of the new job on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将深入了解 Job Hooks。到时见！
+In tomorrow's challenge, we will take a look at Job Hooks. See you then! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+13+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 13 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 13 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)
+

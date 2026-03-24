@@ -1,17 +1,18 @@
-# 使用 REST API 与 Nautobot Jobs 交互
+# Use REST API to Interact with Nautobot Jobs
 
-Nautobot 使用 [Django REST Framework](https://www.django-rest-framework.org/) 提供 Web API，该 API 可用于触发 Nautobot Jobs。
+Nautobot uses [Django REST Framework](https://www.django-rest-framework.org/) to provide Web APIs. The API can be used to trigger Nautobot Jobs. 
 
-在今天的挑战中，我们将使用 Web API 与 Nautobot Jobs 进行交互。
+In today's challenge, we will use the Web API to interface with Nautobot Jobs. 
 
-## 环境配置
+## Environment Setup
 
-环境配置与 [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md) 相同，以下是步骤摘要，如需详细背景说明请参阅该指南。
+The environment setup will be the same as [Lab Setup Scenario 1](../Lab_Setup/scenario_1_setup/README.md), below is a summary of the steps, please consult the guide for a detailed background if needed. 
 
 > [!TIP]
-> 如果您停止了 Codespace 环境后重新启动，发现 Docker 守护进程无法正常工作，请按照配置指南中的步骤重建环境。
+> If you have stopped the Codespace environment and restart again but found the Docker daemon stopped working, please follow the steps in the setup guide to rebuild the environment. 
 
-按照以下步骤启动 Nautobot：
+We will follow the same steps to start Nautobot: 
+
 ```
 $ cd nautobot-docker-compose/
 $ poetry shell
@@ -20,33 +21,33 @@ $ invoke db-import
 $ invoke debug
 ```
 
-今天的挑战无需启动 Containerlab、Arista vEOS 镜像，也无需创建新文件。
+For today's challenge, we do not need to start Containerlab, Arista vEOS image, or a new file. 
 
-今天挑战的环境已配置完毕。
+The environment is now setup for today's challenge.  
 
-## API 端点示例
+## API Endpoint Example 
 
-首先需要找到 API 参考文档，链接位于 Nautobot 实例页面底部：
+The first thing to do is to locate the API reference. The link can be found on the Nautobot instance at the bottom of the page: 
 
 ![Job_API_1](images/Job_API_1.png)
 
-可以看到与 Jobs 相关的所有端点：
+We can see all the endpoints as they relate to Jobs: 
 
 ![Job_API_2](images/Job_API_2.png)
 
-以 `/extras/job-results/` 为例，可以使用 `try it out` 按钮直接在浏览器中测试该端点：
+Using `/extras/job-results/` as an example, we can use the `try it out` button to test the endpoint directly in the browser: 
 
 ![Job_API_3](images/Job_API_3.png)
 
-找到执行按钮并查看结果：
+Find the execute button and see the results: 
 
 ![Job_API_4](images/Job_API_4.png)
 
-## 轮到你了
+## Your Turn
 
-现在轮到您了，请尝试使用 `curl` 或 `requests` 调用任意 API 端点。
+Now it is your turn, try out any of the API endpoint with either `curl` or `requests`.
 
-关于如何获取 Token 并连接 REST API，可以参阅 [Nautobot 用户指南 - REST API](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/rest-api/authentication/#rest-api-authentication) 文档。
+You can find instructions on how to acquire a token and connect to the REST API in the [Nautobot User Guide - REST API](https://docs.nautobot.com/projects/core/en/stable/user-guide/platform-functionality/rest-api/authentication/#rest-api-authentication) documentation.
 
 ### curl
 ```sh
@@ -81,18 +82,18 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> requests.get("http://localhost:8080/api/extras/job-results/?depth=1", headers=headers).json()
 ```
 
-熟悉 [pynautobot](https://github.com/nautobot/pynautobot) 的用户也可以使用其 [API 端点类](https://github.com/nautobot/pynautobot?tab=readme-ov-file#jobs)。
+For users familiar with [pynautobot](https://github.com/nautobot/pynautobot), you can also use the [API endpoint class](https://github.com/nautobot/pynautobot?tab=readme-ov-file#jobs). 
 
-发挥创意，期待看到您的成果！
+Be creative, we look forward to your results! 
 
-## 第 15 天待办事项
+## Day 15 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上发布 API 执行结果的截图，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post a screenshot of the API execution on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将了解如何按固定时间间隔调度 Job。明天见！
+In tomorrow's challenge, we will take a look at how to schedule jobs at a regular interval. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+15+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 15 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 15 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)

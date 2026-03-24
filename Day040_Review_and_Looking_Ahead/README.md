@@ -1,55 +1,55 @@
-# 回顾与展望
+# Review and Look Ahead
 
-恭喜完成 40 天的 Nautobot 挑战！是时候喘口气，拍拍自己的肩膀，为出色的工作点个赞（没有双关语的意思）！
+Congratulations on completing 40 days of Nautobot challenges! It is time to take a breather and pad yourself on the back for a job well done (no punt intended)! 
 
-从第 41 天开始，我们将深入开发 Nautobot 应用程序。
+Starting from Day 41, we will be diving deeper into developing Nautobot applications. 
 
-今天的挑战就是放松一下，回顾我们所学的内容，并展望接下来 20 天的 Nautobot App 挑战。
+Today's challenge is all about taking a breather, review what we have learned and looking ahead to the next 20 days of Nautobot App challenges. 
 
-## 我们学到了什么
+## What We have Learned
 
-很难相信我们已经走了这么远。让我们来回顾一下：
+It is hard to believe how far we have come. Let's review: 
 
-- 第 1 天，我们学习了如何搭建开发环境。
-- 第 3 天和第 4 天，我们编写了一个带有用户输入和日志记录的"Hello World" Job。
-- 第 5 天到第 6 天，我们学习了 Django ORM 以及如何将对象用作变量。
-- 第 9 天到第 11 天，我们将 Python 脚本转换为 Nautobot Jobs。
-- 第 12 天到第 17 天，我们学习了 Job Button、Job Hooks、Job API、调度和审批。
-- 我们学习了如何使用 Git 作为 Jobs 代码的数据源。
-- 第 21 天到第 22 天，我们学习了如何处理上传文件。
-- 第 23 天到第 33 天，介绍了 Job 模板、测试、密钥、故障排查和 Ansible 集成。
-- 在接下来的 6 天里，我们完成了一项艰巨的任务——创建了一个用于设计未来站点的 Job。
+- We learned about how to set up the development environment in Day 1. 
+- We put together a 'Hello World` job with user input and logging in Days 3 and 4. 
+- We learned about Django ORM and how to use Object as variables in Days 5 to 6. 
+- We convert Python scripts to Nautobot Jobs in Days 9 - 11. 
+- We learned about Job Button, Job Hooks, Job API, Scheduling, and Approvals in the following days 12 - 17. 
+- We learned about using Git as data source for Jobs code. 
+- We learned about how to process upload files in Days 21 - 22. 
+- Job templates, testing, secrets, troubleshooting, Ansible integration were introduced in Days 23 - 33.
+- We took on a monster job creation for the next 6 days in creating a job to design future sites.  
 
-如果以上任何概念还不够清晰，现在正是回头复习的好时机。
+If any of these concepts were unclear, now is a great time to go back and review. 
 
-## 展望未来
+## Looking Ahead
 
-虽然 Nautobot Jobs 非常擅长增强 Nautobot 平台的能力，但它们也有自身的局限性。
+While Nautobot Jobs is great at enhancing the capabilities of the Nautobot platform, they have their limitations. 
 
-Nautobot Jobs 是在 Nautobot 内执行特定任务的 Python 脚本，例如数据操作、集成和报告。它们易于编写、部署迅速。
+Nautobot Jobs are Python scripts that perform specific tasks within Nautobot, such as data manipulation, integration, and reporting. They are easy to write and quick to deploy. 
 
-然而，当我们需要更全面、更复杂的扩展时，Nautobot Apps 才是正确的选择。它们提供自定义用户界面、自定义模型以及更高级的自动化能力。
+However, when we need a more comprehensive and sophisticated extension, Nautobot Apps is the way to go. They offer custom user interfaces, custom models, and more advanced automation. 
 
-以下是 Apps 的几个额外优势：
+Here are a few more advantages of Apps: 
 
-- **灵活性**：Apps 提供更高程度的定制化和灵活性。
-- **可扩展性**：Apps 的设计更适合处理大规模任务。
-- **可复用组件**：Apps 可以包含可复用组件，例如自定义字段、视图和模板。
+- Flexibility: Apps provide a higher level of customization and flexibility. 
+- Scalability: Apps are designed to more scalable for larger-scale tasks. 
+- Reusable Components: Apps can include reusable components, such as custom fields, views, and templates. 
 
-## 从 Jobs 到 Apps
+## From Jobs to Apps
 
-在过去 40 天里，你已经在掌握 Nautobot Jobs 方面打下了坚实的基础。现在，我们将基于这些知识过渡到构建 Nautobot Apps。
+You have built a great foundation in the last 40 days mastering Nautobot Jobs. Now we will transition to building Nautobot Apps based on the knowledge. 
 
-展望未来，Apps 让网络开发者能够创建更有影响力、更全面的解决方案。你甚至可以将自己的 App 分享给整个 Nautobot 社区。
+Looking ahead, Apps enable network developers to create more impactful and comprehensive solutions. You can even share your Apps to the rest of the Nautobot community. 
 
-我迫不及待地想要开始了！你呢？
+I can't wait to get started! What about you? 
 
-## 第 40 天待办事项
+## Day 40 To Do
 
-请在你选择的社交媒体上发布你对从 Jobs 过渡到 Apps 最期待的事情，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
+Go ahead and post what you are most excited about making a transition from Jobs to Apps on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将"为 Nautobot App 烤一块饼干"。听起来很有趣吧？明天见！
+In tomorrow's challenge, we will "bake a cookie for Nautobot App". Sounds interesting, right? See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+40+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 40 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 40 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot)  

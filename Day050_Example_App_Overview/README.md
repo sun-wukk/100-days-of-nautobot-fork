@@ -1,82 +1,85 @@
-# 示例 App 概览
+# Example App Overview
 
-从现在起的第 50 至 59 天，我们将借助一个现成的示例 App，把前面所学的知识运用到 Nautobot 的实际开发环境中。
+In the next few days, Days 50 to 59 to be exact, we will apply what we learned to the Nautobot environment using a pre-existing example app setting. 
 
-具体来说，我们将克隆 [Nautobot](https://github.com/nautobot/nautobot) 仓库，并使用其中的 [example_app](https://github.com/nautobot/nautobot/tree/develop/examples/example_app)。
+In particular, we will clone the [Nautobot](https://github.com/nautobot/nautobot) repository and use the [example_app](https://github.com/nautobot/nautobot/tree/develop/examples/example_app) within Nautobot repository. 
 
-与[第 42 天](../Day042_Baking_an_App_Cookie/README.md)类似，Nautobot 仓库自带一套包含多个 Docker 容器的开发环境，我们将直接使用它。
+Just like [Day 42](../Day042_Baking_an_App_Cookie/README.md), the Nautobot repository contains a development environment with various docker containers that we will use. 
 
-今天的挑战，我们将：
+In today's challenge, we will: 
 
-- 搭建开发环境，使用不同的开发容器镜像启动 App。
-- 快速梳理 App 如何与 Nautobot 集成，了解完整的端到端工作流。
+- Set up the development environment and launch the App with different dev container images. 
+- Do a quick overview of how the App integrates to Nautobot for an end-to-end workflow. 
 
-准备好了吗？我们开始吧。
+Ready? Let's get started. 
 
-## 环境搭建
+## Environment Setup
 
-第 50 至 59 天将使用[场景二（Scenario 2）](../Lab_Setup/scenario_2_setup/README.md)。该场景包含一个已预先克隆好的 Nautobot 目录：
+We will use [Scenario 2](../Lab_Setup/scenario_2_setup/README.md) for Days 50 - 59. This scenario contains a pre-cloned Nautobot directory we will be working in: 
 
 ![scenario_2](images/scenario_2.png)
 
 > [!INFORMATION]
-> 如果你好奇为何需要使用预克隆的目录，[场景二搭建说明](../Lab_Setup/scenario_2_setup/README.md)中列出了我们对 Codespace 环境所做的调整。
+> If you wonder why we need to use a pre-cloned directory, we listed out the changes we had for Codespace environment in [Scenario 2 Setup](../Lab_Setup/scenario_2_setup/README.md). 
 
-Codespace 启动后，可以看到 `nautobot` 目录：
+Once Codespace is launched, we will see the `nautobot` directory: 
 
 ![nautobot_repository](images/nautobot_repository.png)
 
 > [!WARNING]
-> **已知构建问题（[Issue #64](https://github.com/nautobot/100-days-of-nautobot/issues/64)）**：运行 `invoke build` 之前，请先对 Dockerfile 进行如下修复：
+> **Known Build Issue ([Issue #64](https://github.com/nautobot/100-days-of-nautobot/issues/64))**: Before running `invoke build`, apply these fixes to the Dockerfile:
 > ```bash
 > cd ~/nautobot
-> # 修复一：替换已弃用的 mime-support 包
+> # Fix 1: Replace deprecated mime-support package
 > sed -i 's/mime-support/media-types mailcap/' docker/Dockerfile
-> # 修复二：从 no-binary 列表中移除 xmlsec（兼容 lxml 5.x）
+> # Fix 2: Remove xmlsec from no-binary list (lxml 5.x compatibility)
 > sed -i 's/lxml,pyuwsgi,xmlsec/lxml,pyuwsgi/' docker/Dockerfile
 > ```
 
-启动开发容器的步骤与场景一基本一致，但由于"Nautobot 本体"的复杂度更高、依赖包更多，整个过程会耗时更长。
+The steps to launch the development containers is almost identical to what we have been doing in `Scenario 1`. However, this process takes longer for "nautobot proper" because of the complexity and the additional packages. 
 
-具体步骤如下：
+Here are the steps: 
 
 ```
 $ cd /home/vscode/nautobot
-# ⚠️ 运行 invoke build 前，请先按上方警告对 Dockerfile 进行修复
+# ⚠️ Apply the Dockerfile fixes from the warning above before running invoke build
 $ poetry shell
 $ poetry install
 ...
-（大量依赖包安装过程）
+(lots of packages)
 ...
 $ invoke build
 ...
-（此步骤较慢，请耐心等待，可以去泡杯咖啡或茶）
+(be patient with this step, please grab a cup coffee/tea)
 ...
 $ invoke debug
 ...
-（此步骤同样需要等待，再来一杯也无妨）
+(be patient with this step as well, please grab another cup of coffee/tea)
 ...
 ```
 
-一切完成后，各容器会开放多个端口，选择我们熟悉的 8080 端口即可：
+Finally, once everything is completed, you will see many ports opened by various containers, please pick our favorite port 8080: 
 
 ![port_8080](images/port_8080.png)
 
-使用 `admin/admin` 作为用户名和密码登录。
 
-登录后可以看到 [Django Debug Toolbar](https://django-debug-toolbar.readthedocs.io/en/latest/) 处于激活状态——这是一个非常强大的调试工具，但为了获得更宽阔的页面空间，我们先点击顶部的 `Hide>>` 按钮将其收起。
+We can log in with `admin/admin` and username and password. 
+
+Once logged in, we can see [Django Debug Toolbar](https://django-debug-toolbar.readthedocs.io/en/latest/) is active, it is a fantastic debug tool, however, we will minimize it for more screen real estate with the `Hide>>` button on the top. 
 
 ![django_debug_toolbar](images/django_debug_toolbar.png)
 
-接下来，我们仔细看看这套环境。
+In the next section, we will take a closer look at this environment. 
 
-## 示例 App 环境
+## Example Application Environment
 
-以下是几个值得关注的新特性：
+Here are some of the points of interest that are new to us: 
 
-- 环境中新增了一个运行 [Selenium](https://www.selenium.dev/) 的 Docker 镜像，用于无界面（headless）的 Web UI 自动化测试。
-- 当前 Nautobot 版本为 2.4。对我们的目的而言差异不大，但 2.3 与 2.4 之间确实存在一些变化。
-- 如果想了解各服务对应的端口：
+- There is a new docker image with [Selenium](https://www.selenium.dev/), it is used for headless Web UI Testing.
+
+- The Nautobot version is 2.4. For our purpose it does not make much difference, but there are obviously some differences between Nautobot 2.3 and 2.4. 
+
+- If you are interested in which services maps to which port: 
 
 ```
 @ericchou1 ➜ ~ $ cd nautobot
@@ -91,16 +94,16 @@ dd26d3cf119d   redis:6-alpine                        "docker-entrypoint.s…"   
 f6b2d7fe2883   selenium/standalone-firefox:4.27      "/opt/bin/entry_poin…"   9 minutes ago   Up 9 minutes             5900/tcp, 0.0.0.0:4444->4444/tcp, :::4444->4444/tcp, 0.0.0.0:15900->15900/tcp, :::15900->15900/tcp, 9000/tcp   nautobot-2-4-selenium-1
 ```
 
-### 示例 App
+### Example App
 
-在 `APPS -> Installed Apps` 页面，可以看到 `Example Nautobot App` 已预装其中：
+In the `APPS -> Installed Apps` section, we see the `Example Nautobot App` is already installed: 
 
 ![example_app_detail](images/example_app_detail.png)
 
-进入 `nautobot` 容器，看看以下两个关键路径：
-
-- 源代码映射在容器的 `/source` 目录下。
-- Nautobot 安装于 `/opt/nautobot`。
+We will attach to the `nautobot` container and take a look at the following: 
+ 
+- The code is mapped under `/source` in the container. 
+- Nautobot is installed under `/opt/nautobot`. 
 
 ```
 @ericchou1 ➜ ~ $ docker exec -it -u root nautobot-2-4-nautobot-1 bash
@@ -112,20 +115,23 @@ root@b3f7ed22a9e5:/source# ls
 CHANGELOG.md        LICENSE.txt  SECURITY.md  docker    git                 jobs        nautobot                 pyproject.toml  tasks.py
 CODE_OF_CONDUCT.md  NOTICE       changes      docs      install.sh          media       nautobot.code-workspace  renovate.json   venv
 CONTRIBUTING.md     README.md    development  examples  invoke.yml.example  mkdocs.yml  poetry.lock              scripts
+root@b3f7ed22a9e5:/source#
 
 root@b3f7ed22a9e5:/source# ls /opt/nautobot/
 __pycache__  git  jobs  media  nautobot_config.py  static
+
 ```
 
-### URL 路由分发
+### URL Dispatch
 
-我们可以从 Python 包入手，顺着核心 `urls.py` 一路追踪，看到它如何将 URL 规则委托给 `example_app/urls.py` 处理：
+We can walk from the Python packages to the core `urls.py` and see it offloads the URL patterns to `example_app/urls.py`:
 
 ```
 root@b3f7ed22a9e5:/source# cat /usr/local/lib/python3.12/site-packages/nautobot.pth 
 /source
 
 root@b3f7ed22a9e5:/source# cat nautobot/core/urls.py 
+nautobot/core/urls.py
 ...
 from nautobot.extras.plugins.urls import (
     apps_patterns,
@@ -151,7 +157,7 @@ from example_app import views
 
 app_name = "example_app"
 router = NautobotUIViewSetRouter()
-# ExampleModel 使用 ViewSet 注册
+# ExampleModel is registered using the ViewSet
 router.register("models", views.ExampleModelUIViewSet)
 router.register("other-models", views.AnotherExampleModelUIViewSet)
 
@@ -164,7 +170,7 @@ urlpatterns = [
         RedirectView.as_view(url=static("example_app/docs/index.html")),
         name="docs",
     ),
-    # 对使用 NautobotUIViewSet 的模型，仍可额外添加路由
+    # Still have the ability to add routes to a model that is using the NautobotUIViewSet.
     path("circuits/<uuid:pk>/example-app-tab/", views.CircuitDetailAppTabView.as_view(), name="circuit_detail_tab"),
     path(
         "devices/<uuid:pk>/example-app-tab-1/",
@@ -176,10 +182,11 @@ urlpatterns = [
         views.DeviceDetailAppTabTwoView.as_view(),
         name="device_detail_tab_2",
     ),
-    # 此 URL 用于测试 override_views 功能，具体实现位于
-    # examples.example_app_with_view_override.example_app_with_view_override.views
+    # This URL definition is here in order to test the override_views functionality which is defined
+    # in examples.example_app_with_view_override.example_app_with_view_override.views
     path("override-target/", views.ViewToBeOverridden.as_view(), name="view_to_be_overridden"),
-    # 此 URL 用于测试 NautobotUIViewSetMixin 中的 permission_classes 功能
+    # This URL definition is here in order to test the permission_classes functionality which is defined
+    # in NautobotUIViewSetMixin
     path(
         "view-with-custom-permissions/",
         views.ViewWithCustomPermissions.as_view({"get": "list"}),
@@ -187,39 +194,40 @@ urlpatterns = [
     ),
 ]
 urlpatterns += router.urls
+
 ```
 
-从 URL 规则中可以看到，`config/` 路径对应 `views.ExampleAppConfigView` 视图。从根路径算起，完整地址应为 `plugins/example-app/config/`：
+From the URL patterns, we can see there is a pattern for `config/` for the `views.ExampleAppConfigView` view. From the root level, it should be `plugins/example-app/config/`: 
 
 ![example_app_url_1](images/example_app_url_1.png)
 
-来看看这个视图的代码：
+Let's see the code for that view: 
 
 ```
 root@b3f7ed22a9e5:/source# cat examples/example_app/example_app/views.py
 ...
 class ExampleAppConfigView(views.GenericView):
     def get(self, request):
-        """渲染此 App 的配置页面。
-        
-        仅作示例——实际使用时，你需要根据 App 的具体情况传入真实的配置数据。
+        """Render the configuration page for this App.
+
+        Just an example - in reality you'd want to use real config data here as appropriate to your App, if any.
         """
         form = forms.ExampleAppConfigForm({"magic_word": "frobozz", "maximum_velocity": 300000})
         return render(request, "example_app/config.html", {"form": form})
 
     def post(self, request):
-        """处理此 App 的配置变更请求。
-        
-        此处未作实际实现。
+        """Handle configuration changes for this App.
+
+        Not actually implemented here.
         """
         form = forms.ExampleAppConfigForm({"magic_word": "frobozz", "maximum_velocity": 300000})
         return render(request, "example_app/config.html", {"form": form})
 ...
 ```
 
-这段视图代码与我们之前学的写法有些不同——之前用的是 `def` 定义的函数视图，这里用的是 `class`（类视图）。这是为什么？简单来说，[函数视图](https://docs.djangoproject.com/en/5.1/topics/http/views/)和[类视图](https://docs.djangoproject.com/en/5.1/topics/class-based-views/)都是合法的视图实现方式，类视图是更新的写法，用更少的代码做更多的事，代价是引入了更多"Django 魔法"。
+The code for the view is a bit different from what we have learned before. The type of view code we used were Python functions with `def`, but this view is using `class`. What gives? In short, [function-based views](https://docs.djangoproject.com/en/5.1/topics/http/views/) and [class-based views](https://docs.djangoproject.com/en/5.1/topics/class-based-views/) are both valid ways of generating a view but `class-based views` is newer and does more with less code at the expense of giving more `Django magic`. 
 
-即使看不懂每一行代码，我们也能从视图中找到关键信息——它返回的模板是 `example_app/config.html`，让我们看看模板内容：
+Even if we do not fully understand the code, we can see the template being returned is `example_app/config.html` in the view code, let's take a look at the template code: 
 
 ```
 root@c8032ee34216:/source# cat examples/example_app/example_app/templates/example_app/config.html 
@@ -258,53 +266,53 @@ root@c8032ee34216:/source# cat examples/example_app/example_app/templates/exampl
 {% endblock content %}
 ```
 
-我们刚刚完整地走了一遍从初始 URL 到最终 HTML 模板的完整链路：**URL 路由 → 视图 → HTML 模板**。不过，数据库模型在哪里呢？回头看视图代码，有一行 `form = forms.ExampleAppConfigForm`，来瞧瞧：
+Cool, we just traced from the initial URL all the way to the final HTML template with `URL Dispatch -> View -> HTML Template`. But wait, what about database models? I am glad you asked, looking back in the view code, there is a `form = forms.ExampleAppConfigForm`. Let's take a look at that: 
 
 ```
 root@c8032ee34216:/source# cat examples/example_app/example_app/forms.py 
 ...
 class ExampleAppConfigForm(BootstrapMixin, forms.Form):
-    """App 专属配置表单的示例。"""
+    """Example of what an App-specific configuration form might look like."""
 
     magic_word = forms.CharField()
     maximum_velocity = forms.IntegerField(help_text="Meters per second")
 ...
 ```
 
-可以看到，这部分代码与数据库模型并无关联。但从 `forms.py` 的其他代码片段中可以发现，如果需要通过表单提交来修改数据库，相关逻辑就会写在这里。
+Ok, so we can see this particular code does not have anything to do with database models. However, as we can see from other code snippets in the form, this is where the code would be if we need to modify the database models with a form submission. 
 
-今天的挑战证明了一点：即使不理解每一行代码，凭借对 Django 基本设计模式的认知，我们依然能对代码结构了然于胸。
+In today's challenge, even without understanding every line of code, we can still get a good sense of where things are with just basic Django design patterns. 
 
-最后一步，动手修改 HTML，看看效果。
+The last step is to make a simple HTML change and see it on the screen. 
 
-## 修改顶部横幅
+## Change Banners
 
-展开首页的 Django Debug Toolbar：
+Let's expand the Django debug toolbar on the home page:  
 
 ![debug_toolbar_1](images/debug_toolbar_1.png)
 
-工具栏提供了 CPU 耗时、当前请求、SQL 查询数量等信息。在 `Templates` 一栏可以看到模板路径。找到生成横幅的模板：
+We can see the toolbar gives us information such as the CPU time, current request, number of SQL queries. Under `Templates` we can see the template paths. Let's find the template that generates the banner:
 
 ![debug_toolbar_2](images/debug_toolbar_2.png)
 
-找到后，加入一行 `<h1>` 标签，写上 `Hello Banners!`：
+Once we find it, we can add a `<h1>` tag to say `Hello Banners!`: 
 
 ![banner_1](images/banner_1.png)
 
-成了！用户登录后就能看到我们精心准备的欢迎语：
+There it is, our awesome message to whoever sees the banner when they log in: 
 
 ![banner_2](images/banner_2.png)
 
-今天的挑战是理解 Nautobot 架构、学会利用现有框架开发新 App 的重要一步，收获满满！
+I don't know about you, but today's challenge is a giant step toward understanding Nautobot structure and how we can use the existing framework to develop our new app! 
 
-## 第 50 天待办事项
+## Day 50 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。如前所述，接下来几天我们还会继续使用同一个实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). As mentioned, we will use the same instance for the next few days. 
 
-请在你选择的社交媒体上发布新横幅或今天任意步骤的截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
+Go ahead and post a screenshot of the new banner or any of the steps in today's challenge on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-明天的挑战，我们将在示例 App 中操作数据库模型。明天见！
+In tomorrow's challenge, we will be working with database models in the example app. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+50+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 50 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 50 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 

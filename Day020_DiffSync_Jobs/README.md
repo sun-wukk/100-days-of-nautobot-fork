@@ -1,45 +1,45 @@
-# Jobs 结合示例 —— SSoT 与 DiffSync
+# Coupling Jobs Example - SSoT and DiffSync 
 
-在过去 19 天中，我们探索了 Nautobot Jobs 的各个方面，从创建、调度，到使用 Git 作为数据源，涵盖了大量内容。
+In the last 19 days, we explored different aspects of Nautobot jobs, from creation, to scheduling, to using Git as data source. We covered a lot of ground. 
 
-我们已经走到了 Jobs 学习旅程的中间节点，此时适合稍作休整，退一步从整体视角来审视 Jobs 在全局中的定位。
+We are at the halfway point of our Jobs journey, it seems logical at this point, we take a breather and zoom out a bit to take a look at Jobs in terms of how it fits into the overall picture. 
 
-## 从 Jobs 到 Apps
+## From Jobs to Apps
 
-Jobs 非常适合实现战术性目标，例如将 Python 脚本转化为可共享、可定期执行的任务。然而，随着 Jobs 数量的增加，几乎总会到达一个需要对相似 Job 进行分组和整合的临界点。
+Jobs are great to achieve tactical goals, such as converting a Python script into a task that can be shared and executed on a regular interval. However, as we start adding more Jobs, there is almost always a point where we need to start segment and group similar jobs together. 
 
-这正是 Nautobot Apps 发挥作用的地方。我们将在 100 天挑战的后半段深入探讨 Nautobot Apps，但在这里，我们先以 Nautobot 单一事实来源（SSoT）为例，了解 Jobs 的逻辑分组方式。
+This is where Nautobot Apps can come in. We will dive deeper into Nautobot Apps in the second half of the 100 Days challenge, but here we will use the Nautobot Single Source of Truth (SSoT) as an example of logical grouping of Jobs. 
 
-## SSoT 与 DiffSync
+## SSoT & DiffSync
 
-[DiffSync](https://github.com/networktocode/diffsync) 是一个实用工具库，可用于比较和同步不同的数据集。
+[DiffSync](https://github.com/networktocode/diffsync) is a utility library that can be used to compare and synchronize different datasets. 
 
-其主要使用场景是比较并同步多个数据源，如[此处](https://raw.githubusercontent.com/networktocode/diffsync/develop/docs/images/diffsync_components.png)所示：
+The primary use case is to compare multiple sources of data to compare and synchronize, as illustrated [here](https://raw.githubusercontent.com/networktocode/diffsync/develop/docs/images/diffsync_components.png): 
 
 ![diff_sync_1](images/diff_sync_1.png)
 
-这自然适合使用该库通过 Nautobot Jobs 来同步不同的数据源。正是基于这一需求，我们开始创建能够与 Meraki、ACI、IP Fabric 和 Infoblox 等数据源集成的"适配器"。
+This certainly calls for using the library to synchronize different sources using Nautobot Jobs. This is exactly what happened as we start to create 'Adapters' that integrates with sources such as Meraki, ACI, IP Fabric, and Infoblox: 
 
-相关集成可以在 [nautobot-app-ssot/nautobot_ssot](https://github.com/nautobot/nautobot-app-ssot/tree/develop/nautobot_ssot) 中查看。可以注意到，每个集成都将 Nautobot Jobs 作为执行入口：
+The integration can be viewed on [nautobot-app-ssot/nautobot_ssot](https://github.com/nautobot/nautobot-app-ssot/tree/develop/nautobot_ssot). Notice that each of the integration includes Nautobot Jobs as the execution point: 
 
 ![ssot_1](images/ssot_1.png)
 
-基于这些"适配器"，我们可以使用其他 Jobs 来执行实际的集成操作，例如 [nautobot ssot 示例 Job](https://github.com/nautobot/nautobot-app-ssot/blob/develop/nautobot_ssot/jobs/examples.py)：
+From the 'Adapters' we can use other Jobs to execute the actual integration, such as the [nautobot ssot example job](https://github.com/nautobot/nautobot-app-ssot/blob/develop/nautobot_ssot/jobs/examples.py)
 
 ![ssot_2](images/ssot_2.png)
 
-可以看到，Job 可以相互嵌套叠加，并作为基础模块被整合进可发布为软件包的 App 中。
+As you can see, Job can be layered on top of each other and provides base points for being housed into of an App that can be distributed as a package. 
 
-在明天的挑战中，我们将回归更多 Nautobot Job 的实践示例。
+In tomorrow's challenge, we will get back to more Nautobot Job examples. 
 
-## 第 20 天待办事项
+## Day 20 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-欢迎在社交媒体上分享您对构建 SSoT、DiffSync 或 Jobs 的想法，记得使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，让我们一起分享您的进展！
+Go ahead and post your thought on building SSoT, DiffSync, or Jobs on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-在明天的挑战中，我们将了解如何通过 Jobs 上传和处理文件。明天见！
+In tomorrow's challenge, we will take a look at uploading and processing files with Jobs. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+20+of+the+100+days+of+nautobot+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 20 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 20 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 

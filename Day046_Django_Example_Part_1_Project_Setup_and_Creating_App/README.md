@@ -1,32 +1,32 @@
-# Django 入门（一）：搭建项目与创建应用
+# Django Example - Part 1. Setting Up Project and Create App
 
-在本次挑战中，我们多次提到 Nautobot 是基于 Python Django 框架构建的。正如我们所见，使用 Nautobot 并不需要掌握 Django。但随着我们在 Nautobot App 开发之路上走得越来越深，具备一定的 Django 基础将大有裨益，有助于理解 Django 与 Nautobot 之间的内在联系。
+In our challenge so far, we have mentioned a number of times Nautobot is based on the Python Django framework. As we have seen, one does not need to know Django to take advantage of Nautobot. But as we progress further into our journey of Nautobot app development, it is beneficial to have some basic understanding of Django to make the necessary connection between Django and Nautobot. 
+ 
+Django is known since the beginning for its detailed and extensive documentation. I mean, what else would you expect from a web framework coming out of an award-winning newspaper organization? :)
 
-Django 以其详尽全面的文档著称于世——毕竟，来自一家屡获殊荣的新闻机构的 Web 框架，文档怎么能不扎实？:)
-
-我们将官方的七部曲 [Django 教程](https://docs.djangoproject.com/en/5.1/intro/tutorial01/)浓缩成四个章节，安排在第 46 至 49 天，旨在帮助大家掌握 Django 主要组件的基本概念，从而加深对 Nautobot 的理解。
+We took the detailed 7-part [Django Tutorial](https://docs.djangoproject.com/en/5.1/intro/tutorial01/) and condensed them into a 4-part series for Day 46 - 49 just to give us some basic understanding of the major components of Django and help us further our understanding of Nautobot. 
 
 > [!IMPORTANT]
-> 这是一个精简版教程，节奏较快，重点在于快速搭出一个可运行的应用，以便直观感受 Django 的各个核心组成部分。[Django 官方教程](https://docs.djangoproject.com/en/5.1/intro/tutorial01/)对细节有非常出色的讲解，并附有丰富的延伸资料，如需深入了解请参阅原文。
+> We will move fast in this condensed version of the tutorial. The emphasis will be on moving quickly to have a working app to see the main moving parts of Django. The [Django Tutorial](https://docs.djangoproject.com/en/5.1/intro/tutorial01/) does a fantastic job in explaining the details as well as providing additional resources, please refer to the tutorial for more details.
 
-今天的挑战，我们将搭建一个 Django 项目并在其中创建一个应用。
+In today's challenge, we will be setting up a Django project and creating an app in the project. 
 
-具体步骤如下：
+Here are the steps: 
 
-- 创建虚拟环境
-- 创建 Django 项目
-- 创建应用并将其注册到项目中
-- 编写初始视图，并将用户路由到该视图
+- Create virtual environment 
+- Create Django project 
+- Create App and add it the project
+- Create the initial view and route the user to that view
 
-让我们开始吧。
+Let's get started. 
 
-## 环境搭建
+## Environment Setup
 
-我们将继续使用一直以来的 Codespace 环境，无需启动 `nautobot-docker-compose` 容器，后续所有必要步骤都会在这几天中逐一介绍。
+We will be using the usual Codespace that we have been using. But we do not need to launch `nautobot-docker-compose` containers, all the necessary steps will be covered in the days. 
 
-## 代码示例
+## Code Example
 
-从默认主目录 `/home/vscode` 出发，创建一个存放新项目的目录，并用 `poetry init` 初始化虚拟环境：
+From the default home directory `/home/vscode`, we can create a directory that will contain our new project. We will also use `poetry` with `poetry init` to create a virtual environment: 
 
 ```
 @ericchou1 ➜ ~ $ mkdir djangoproject
@@ -78,7 +78,7 @@ build-backend = "poetry.core.masonry.api"
 Do you confirm generation? (yes/no) [yes] 
 ```
 
-创建完成后，用 `poetry shell` 激活虚拟环境：
+Once it is created, we will use `poetry shell` to activate the environment: 
 
 ```
 @ericchou1 ➜ ~/djangoproject $ poetry shell
@@ -86,7 +86,7 @@ Creating virtualenv djangoproject-jP4IF3vC-py3.10 in /home/vscode/.cache/pypoetr
 Spawning shell within /home/vscode/.cache/pypoetry/virtualenvs/djangoproject-jP4IF3vC-py3.10
 ```
 
-用 `pip` 安装 Django，再用 `django-admin` 命令初始化一个新的 Django 项目，然后进入项目目录：
+We will install Django with `pip` and use `django-admin` command to initialize a new Django project and `cd` to the new directory: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject $ pip install django
@@ -98,7 +98,8 @@ Spawning shell within /home/vscode/.cache/pypoetry/virtualenvs/djangoproject-jP4
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject $ cd mysite/
 ```
 
-此时已可以启动开发服务器，查看基本的首页效果：
+At this point we can use the development server to see a basic home page: 
+
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py runserver 0.0.0.0:8080
@@ -117,11 +118,11 @@ Quit the server with CONTROL-C.
 
 ![django_hello_world_1](images/django_hello_world_1.png)
 
-按 `CONTROL-C` 停止服务器。
+We can stop the server with `CONTROL-C`. 
 
-项目目录（本例中为 `mysite`）包含项目级别的工具，其中 `manage.py` 可用于执行各类项目级任务，例如启动开发服务器、创建管理员账户等。
+The project directory, in our case `mysite` contains project-level tools, including the `manage.py` that we can use to perform project level tasks, such as launching the development server, create admin user, etc. 
 
-仔细观察会发现，目录内有一个与项目同名的子目录 `mysite`，其中包含控制配置和顶层 URL 路由的文件：
+If you take a closer look, there is a subdirectory with the same name as the project called `mysite` that contains files that controls the settings as well as the top-level URL routing: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ pwd
@@ -142,15 +143,15 @@ mysite/
 1 directory, 9 files
 ```
 
-Django 的组织方式是将每个应用独立成一个文件夹。对于简单的应用来说，这看似繁琐，但从长远来看，这种"约定大于配置"的思路非常有利于关注点分离。
+The way Django organize the structure, is to break down each of the application into its own folder. This might seem like a lot of work for a simple app, but in the long run, this opinionated approach works great for separate of concerns. 
 
-用 `manage.py` 创建一个名为 `polls` 的新应用：
+We will use `manage.py` to create a new app named `polls`: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py startapp polls
 ```
 
-至此，目录结构如下：`djangoproject` 存放虚拟环境文件，子目录 `djangoproject/mysite` 包含项目级配置，`djangoproject/mysite/mysite` 是站点入口，`djangoproject/mysite/polls` 则包含 `polls` 应用的所有文件：
+At this point, we have a folder named `djangoproject` with our virtual environment files, a subfolder `djangoproject/mysite` for project level settings, another subfolder `djangoproject/mysite/mysite` for the entry point for the entry point to the site, and another folder `djangoproject/mysite/polls` containing files for our `polls` app: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ tree .
@@ -181,7 +182,7 @@ Django 的组织方式是将每个应用独立成一个文件夹。对于简单�
 4 directories, 18 files
 ```
 
-在项目级配置文件 `djangoproject/mysite/mysite/settings.py` 中，将新应用添加到已安装应用列表：
+We will need to add the new app to the installed apps list in the project level settings under `djangoproject/mysite/mysite/settings.py`: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ vim mysite/settings.py
@@ -195,7 +196,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-在主项目的 `urls.py` 中，将所有 `polls/` 路径的请求转发给 `polls` 应用内的 `urls.py` 处理：
+We will tell the main project `urls.py` file to route anything with the `polls/` path to the `urls.py` file within our project. We can do this with the following code:  
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat mysite/urls.py 
@@ -209,13 +210,13 @@ urlpatterns = [
 ]
 ```
 
-在 `polls` 应用下新建 `urls.py` 文件：
+We will need to create a new `urls.py` under polls project: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ touch polls/urls.py
 ```
 
-在该文件中，用空字符串 `''` 表示根路径，将其指向 `views` 文件中名为 `index` 的视图（稍后创建）：
+In the file, we will state at the root level, specified with an empty `''` we will show the user with a view called index that is from the `views` file (that we will create shortly): 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/urls.py 
@@ -227,7 +228,7 @@ urlpatterns = [
 ]
 ```
 
-在 `polls/views.py` 中，用简单的 `HttpResponse` 实现 `index` 视图：
+In the `polls/views.py` we will now create that view using simple `HttpResponse`: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ cat polls/views.py 
@@ -237,28 +238,28 @@ def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 ```
 
-再次启动开发服务器，查看刚创建的视图：
+To see the newly created view, we will start the development server again: 
 
 ```
 (djangoproject-py3.10) @ericchou1 ➜ ~/djangoproject/mysite $ python manage.py runserver 0.0.0.0:8080
 ```
 
-访问 `polls/` 路径，新视图如期呈现：
+And there you go, the fancy new view is shown under `polls/`:
 
 ![django_polls_index_1](images/django_polls_index_1.png)
 
-看似平淡无奇，却值得小小庆祝——我们刚刚完整地创建了第一个 Django 项目，在其中添加了一个新应用，并让用户能够访问它。
+It might not seem much, but it is a small victory worth celebrating as we just created our first Django project with a new application and allow it to be seen by the user. 
 
-请停止 Codespace，但**不要删除**，接下来几天我们还会继续在这个项目上开展工作。
+Please stop the codespace but do not delete it as we will continue to work on the same project for the next few days. 
 
-## 第 46 天待办事项
+## Day 46 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-请在你选择的社交媒体上发布今天创建的新应用截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
+Go ahead and post a screenshot of a new app that you have create from today's challenge on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-明天的挑战，我们将创建新的数据库模型。明天见！
+In tomorrow's challenge, we will create new database models. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+46+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 46 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 46 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 

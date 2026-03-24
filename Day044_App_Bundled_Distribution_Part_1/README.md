@@ -1,19 +1,19 @@
-# App 打包与发布（上篇）
+# App Bundled and Distribution (Part 1)
 
-在典型的应用开发流程中，开发完成后需要一套可靠的分发机制。[第 41 天](../Day041_Installing_and_Uninstalling_Apps/README.md)我们已经见识过，一旦应用上架 PyPI，安装起来有多简单——但如何将应用打包成可以上传到 PyPI 的格式呢？这正是第 44 天（今天）和第 45 天（明天）要解决的问题。
+In a typical app development cycle, we will need a way to distribute the application once it is completed. We saw in [Day 41](../Day041_Installing_and_Uninstalling_Apps/README.md) how easy it was to install an application once it is on PyPI, but how do we package the application in a way to be able to upload to PyPI? The last part of distribution is the focus of Day 44 (today) and Day 45 (tomorrow).
 
-整体脉络如下：
+In summary: 
 
-- 第 42 天：用 Cookiecutter 生成 Nautobot App 脚手架。
-- 第 43 天：理解 App 结构，着手开发。
-- 第 44 天（今天）：将 App 打包成 wheel 文件，可本地使用或上传至 PyPI。
-- 第 45 天（明天）：将此 App 安装到另一个 Nautobot 实例。
+- Day 42: Create a Nautobot App using Cookiecutter. 
+- Day 43: Understand the App structure and start developing. 
+- Day 44 (Today): Bundle the App into a wheel file that can be downloaded locally or upload to PyPI. 
+- Day 45 (Tomorrow): Install this app on another Nautobot instance. 
 
-准备好了吗？我们开始吧。
+Ready? Let's get started. 
 
-## 环境搭建
+## Environment Setup
 
-从[第 43 天](../Day042_Baking_an_App_Cookie/README.md)重启 Codespace 实例，然后启动 App 开发环境：
+Restart the Codespace instance from [Day 43](../Day042_Baking_an_App_Cookie/README.md) and start the app development environment: 
 
 ```
 @ericchou1 ➜ ~ $ cd outputs/nautobot-app-my-awesome-app/
@@ -35,11 +35,11 @@ nautobot-1  | Quit the server with CONTROL-C.
 nautobot-1  | 
 ```
 
-一切就绪，可以开始打包了。
+We are ready to package our application for distribution. 
 
-## 操作示例
+## Example
 
-`pyproject.toml` 中保存了我们在初始化时填写的项目信息，包括版本号、描述、作者等：
+The `pyproject.toml` contains the information we created during the initial setup, including version, description, author, etc.: 
 
 ```
 @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ cat pyproject.toml 
@@ -68,13 +68,13 @@ packages = [
     { include = "my_awesome_app" },
 ]
 include = [
-    # Poetry 默认会排除 .gitignore 中列出的文件
+    # Poetry by default will exclude files that are in .gitignore
     "my_awesome_app/static/my_awesome_app/docs/**/*",
 ]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.13"
-# 仅用于本地开发
+# Used for local development
 nautobot = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -89,13 +89,13 @@ ruff = "0.5.5"
 yamllint = "*"
 toml = "*"
 Markdown = "*"
-# 渲染自定义 markdown，用于版本新增/变更/移除说明
+# Render custom markdown for version added/changed/remove notes
 markdown-version-annotations = "1.0.1"
-# 将文档渲染为 HTML
+# Rendering docs to HTML
 mkdocs = "1.6.0"
-# MkDocs Material 主题
+# Material for MkDocs theme
 mkdocs-material = "9.5.32"
-# 从源码自动生成文档（供 MkDocs 使用）
+# Automatic documentation from sources, for MkDocs
 mkdocstrings = "0.25.2"
 mkdocstrings-python = "1.10.8"
 mkdocs-autorefs = "1.2.0"
@@ -109,12 +109,12 @@ all = [
 ]
 
 [tool.pylint.master]
-# 引入 pylint_django 插件，避免对 Django 代码模式产生误报
+# Include the pylint_django plugin to avoid spurious warnings about Django patterns
 load-plugins = "pylint_django, pylint_nautobot"
 ignore = ".venv"
 
 [tool.pylint.basic]
-# 私有方法、test_ 开头的函数及内部 Meta 类无需 docstring
+# No docstrings required for private methods (Pylint default), or for test_ functions, or for inner Meta classes.
 no-docstring-rgx = "^(_|test_|Meta$)"
 
 [tool.pylint.messages_control]
@@ -123,7 +123,7 @@ disable = """,
 """
 
 [tool.pylint.miscellaneous]
-# 不将 TODO 标记为错误，允许提交含待办事项的代码
+# Don't flag TODO as a failure, let us commit with things that still need to be done in the code
 notes = """,
     FIXME,
     XXX,
@@ -146,22 +146,22 @@ select = [
     "I",  # isort
 ]
 ignore = [
-    # 警告：`one-blank-line-before-class`（D203）与 `no-blank-line-before-class`（D211）互相冲突
-    "D203", # 类 docstring 前需要一个空行
+    # warning: `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible.
+    "D203", # 1 blank line required before class docstring
 
-    # D212 在 google 约定中默认启用，若 docstring 写法如下会报错：
+    # D212 is enabled by default in google convention, and complains if we have a docstring like:
     # """
-    # docstring 内容写在引号后的下一行，而非与引号同行。
+    # My docstring is on the line after the opening quotes instead of on the same line as them.
     # """
-    # 经过讨论，我们认为这是合理的风格选择。
-    "D212", # 多行 docstring 摘要应从第一行开始
-    "D213", # 多行 docstring 摘要应从第二行开始
+    # We've discussed and concluded that we consider this to be a valid style choice.
+    "D212", # Multi-line docstring summary should start at the first line
+    "D213", # Multi-line docstring summary should start at the second line
 
-    # 当前代码库中会产生大量问题
-    "D401", # docstring 首行应使用祈使语气
-    "D407", # 节标题后缺少虚线分隔
-    "D416", # 节名称以冒号结尾
-    "E501", # 行长度超限
+    # Produces a lot of issues in the current codebase.
+    "D401", # First line of docstring should be in imperative mood
+    "D407", # Missing dashed underline after section
+    "D416", # Section name ends in colon
+    "E501", # Line too long
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -234,7 +234,7 @@ name = "Housekeeping"
 showcontent = true
 ```
 
-执行 `invoke generate-packages` 命令，即可生成 wheel 文件——这是 Python 社区通用的一体化安装包格式：
+We can use the `invoke generate-package` to generate wheel file that is standard across Python community as an all-in-one installation package: 
 
 ```
 (my-awesome-app-py3.10) @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ invoke generate-packages
@@ -248,7 +248,7 @@ Building my-awesome-app (0.1.0)
   - Built my_awesome_app-0.1.0-py3-none-any.whl
 ```
 
-生成的 `my_awesome_app-0.1.0-py3-none-any.whl` 和 `my_awesome_app-0.1.0.tar.gz` 文件会保存在 `dist/` 目录下：
+Under the `dist/` folder we have the `my_awesome_app-0.1.0-py3-none-any.whl` and `my_awesome_app-0.1.0.tar.gz` files: 
 
 ```
 (my-awesome-app-py3.10) @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $ ls
@@ -258,18 +258,18 @@ my_awesome_app-0.1.0-py3-none-any.whl  my_awesome_app-0.1.0.tar.gz
 (my-awesome-app-py3.10) @ericchou1 ➜ ~/outputs/nautobot-app-my-awesome-app $
 ```
 
-右键点击 wheel 文件，将其下载到本机的某个位置。明天我们将把它安装到一个独立的 Nautobot 实例上。
+Let's right-click on the wheel file and download the file to a location on our computer. We will come back tomorrow and install the package on a separate Nautobot instance. 
 
 ![download_wheel](images/download_wheel.png)
 
-## 第 44 天待办事项
+## Day 44 To Do
 
-记得在 [https://github.com/codespaces/](https://github.com/codespaces/) 上停止 Codespace 实例。
+Remember to stop the codespace instance on [https://github.com/codespaces/](https://github.com/codespaces/). 
 
-请在你选择的社交媒体上发布今天生成的 `dist/` 目录截图，务必使用标签 `#100DaysOfNautobot` `#JobsToBeDone` 并 @ `@networktocode`，这样我们可以分享你的进展！
+Go ahead and post a screenshot of the new `dist/` folder you created from today's challenge on a social media of your choice, make sure you use the tag `#100DaysOfNautobot` `#JobsToBeDone` and tag `@networktocode`, so we can share your progress! 
 
-明天的挑战，我们将正式安装这个包。明天见！
+In tomorrow's challenge, we will be installing this package. See you tomorrow! 
 
 [X/Twitter](<https://twitter.com/intent/tweet?url=https://github.com/nautobot/100-days-of-nautobot&text=I+just+completed+Day+44+of+the+100+days+of+nautobot+challenge+!&hashtags=100DaysOfNautobot,JobsToBeDone>)
 
-[LinkedIn](https://www.linkedin.com/)（复制粘贴：I just completed Day 44 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot）
+[LinkedIn](https://www.linkedin.com/) (Copy & Paste: I just completed Day 44 of 100 Days of Nautobot, https://github.com/nautobot/100-days-of-nautobot, challenge! @networktocode #JobsToBeDone #100DaysOfNautobot) 
